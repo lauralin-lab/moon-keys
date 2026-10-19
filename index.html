@@ -22,6 +22,7 @@ video{display:none}
 .top>*{pointer-events:auto}
 .brand{font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:.14em;text-shadow:0 1px 12px rgba(0,0,0,.5);margin-right:auto}
 .btn{font:inherit;font-size:.84rem;color:var(--ink);background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-decoration:none;white-space:nowrap}
+.btn option{background:#1c1636;color:#fff}
 .btn.on{background:var(--sakura);color:#2a1531;border-color:var(--sakura);font-weight:500}
 .btn:focus-visible{outline:2px solid var(--sakura);outline-offset:3px}
 .cards{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding-block:0 calc(14px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
@@ -47,7 +48,8 @@ video{display:none}
 <video id="video" playsinline muted></video>
 
 <div class="top">
-  <div class="brand">手势花园</div>
+  <div class="brand">手势花园<small id="songInfo" style="display:block;font-family:var(--body);font-weight:400;font-size:.72rem;letter-spacing:.02em;color:var(--dim);margin-top:2px"></small></div>
+  <select class="btn" id="song" aria-label="曲子"></select>
   <button class="btn" id="cam">开启摄像头</button>
   <button class="btn" id="clear">清空花园</button>
   <a class="btn" href="https://lauralin-lab.github.io/moon-keys/game.html" target="_blank" rel="noopener">接花瓣游戏</a>
@@ -60,7 +62,7 @@ video{display:none}
 <div class="layer" id="intro">
   <div class="intro">
     <h1>手势花园</h1>
-    <p>你的手就是花。握拳蓄力，张开就开花；捏一下种一颗种子；捏住拖动，长出一条花藤。<br>每朵花都会唱一个音，开过的花会留在画面里，慢慢长成你的花园。</p>
+    <p>你的手就是花。握拳蓄力，张开就开花；捏一下种一颗种子；捏住拖动，长出一条花藤。<br>选一首曲子，每开一朵花就弹出曲子的下一个音：用手势把整首「月光」开出来。开过的花会留在画面里，慢慢长成你的花园。</p>
     <div class="row"><button class="btn on" id="goCam">开启摄像头开始</button><button class="btn" id="goMouse">先用鼠标试试</button></div>
     <p style="font-size:.78rem">鼠标：按住再松开＝握拳张开 · 按住拖动＝花藤 · 快速划过＝花吹雪 · 双击＝満開</p>
   </div>
@@ -100,6 +102,33 @@ function swell(root,amt){if(!ac)return;const t=ac.currentTime,f=ac.createBiquadF
   const g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.07*amt,t+.25);g.gain.exponentialRampToValueAtTime(.0005,t+4);f.connect(g);g.connect(rev);g.connect(out);
   [root,root+7,root+12,root+16].forEach(m=>[-7,7].forEach(d=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=hz(m);o.detune.value=d;o.connect(f);o.start(t);o.stop(t+4.2)}))}
 
+/* ---------------- songs: every bloom plays the next note (public-domain melodies) ---------------- */
+// each entry [melody midi, bass midi?]
+const A=(mel,bass={})=>mel.map((m,i)=>[m,bass[i]]);
+const SONGS={
+  free:{name:'自由（五声音阶）'},
+  moon:{name:'月光 · 贝多芬',notes:A([56,61,64,56,61,64,56,61,64,56,61,64, 56,61,64,56,61,64,57,61,64,57,61,64, 57,62,66,57,62,66,56,61,64,56,61,64, 56,60,66,56,61,64,56,61,63,54,60,63, 61],
+    {0:37,12:35,18:33,24:30,30:32,36:32,42:32,48:37})},
+  elise:{name:'致爱丽丝 · 贝多芬',notes:A([76,75,76,75,76,71,74,72,69, 60,64,69,71, 64,68,71,72, 64,76,75,76,75,76,71,74,72,69, 60,64,69,71, 64,72,71,69],
+    {8:45,12:40,16:45,26:45,30:40,33:45})},
+  kira:{name:'小星星 · きらきら星',notes:A([60,60,67,67,69,69,67,65,65,64,64,62,62,60, 67,67,65,65,64,64,62,67,67,65,65,64,64,62, 60,60,67,67,69,69,67,65,65,64,64,62,62,60],
+    {0:48,4:53,6:48,7:53,9:48,11:43,13:48,14:48,16:53,18:48,20:43,21:48,23:53,25:48,27:43,28:48,32:53,34:48,35:53,37:48,39:43,41:48})},
+  chocho:{name:'蝴蝶 · ちょうちょう',notes:A([67,64,64,65,62,62,60,62,64,65,67,67,67, 67,64,64,64,65,62,62,62,60,64,67,67,64,64,64, 62,62,62,62,62,64,65,64,64,64,64,64,65,67, 67,64,64,64,65,62,62,62,60,64,67,67,60],
+    {0:48,3:43,6:48,13:48,17:43,21:48,28:43,35:48,43:48,47:43,51:48,55:48})},
+  ode:{name:'欢乐颂 · 贝多芬',notes:A([64,64,65,67,67,65,64,62,60,60,62,64,64,62,62, 64,64,65,67,67,65,64,62,60,60,62,64,62,60,60],
+    {0:48,4:43,8:48,12:43,15:48,19:43,23:48,27:43,29:48})}
+};
+let songKey='moon',sIdx=0,songsDone=0;
+function bassNote(b){if(!ac||b==null)return;const t=ac.currentTime,g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16,t+.02);g.gain.exponentialRampToValueAtTime(.0005,t+3.2);g.connect(out);g.connect(rev);
+  [b,b+12].forEach((m,i)=>{const o=ac.createOscillator();o.type=i?'sine':'triangle';o.frequency.value=hz(m);o.connect(g);o.start(t);o.stop(t+3.3)})}
+// returns the melody note to play (or the fallback in free mode) and moves the song along
+function nextNote(fallback){const S=SONGS[songKey];if(!S.notes)return fallback;const [m,b]=S.notes[sIdx];bassNote(b);sIdx++;
+  if(sIdx>=S.notes.length){sIdx=0;songsDone++;setTimeout(()=>{banner={a:'一曲弾き終わった',b:S.name.split(' · ')[0],t:0};flash=.4;for(let k=0;k<60;k++)setTimeout(()=>petals.push({x:Math.random()*W,y:-10,vx:(Math.random()-.3),vy:1+Math.random(),r:3+Math.random()*5,rot:0,vr:.1,life:1.6,h:(hueBase+k*7)%360}),k*40)},400)}
+  renderSong();return m}
+function renderSong(){const S=SONGS[songKey],el=$('songInfo');if(!S.notes){el.textContent='每个手势都会开出五声音阶里的音';return}
+  const NM=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];const nxt=S.notes.slice(sIdx,sIdx+4).map(n=>NM[n[0]%12]).join(' ');
+  el.textContent=`${sIdx} / ${S.notes.length} · 接下来 ${nxt}`+(songsDone?` · 已弹完 ${songsDone} 遍`:'')}
+
 /* ---------------- flowers ---------------- */
 const garden=[],fx=[],petals=[],vines=[],seeds=[];
 function petalPath(r,w=.6){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(r*w*.9,-r*.35,r*w,-r*.95,0,-r*1.1);ctx.bezierCurveTo(-r*w,-r*.95,-r*w*.9,-r*.35,0,0);ctx.closePath()}
@@ -135,18 +164,18 @@ function discover(k){if(found.has(k))return;found.add(k);renderCards();const el=
 /* ---------------- the five blooms ---------------- */
 function bloomPalm(x,y,charge){const h=nextHue(),r=U()*(.045+.065*charge),kind=charge>.75?'peony':'sakura';
   plant(x,y,r,kind,h);ring(x,y,r,h,1+charge);burstPetals(x,y,14+charge*30,h,3+charge*3);
-  const k0=Math.round((1-y/H)*16+2);[0,2,4,7].slice(0,2+Math.round(charge*2)).forEach((d,i)=>pluck(scaleNote(k0+d),.9-i*.12,ac&&ac.currentTime+i*.07));
+  const k0=Math.round((1-y/H)*16+2);const nN=SONGS[songKey].notes?1+Math.round(charge*2):2+Math.round(charge*2);[0,2,4,7].slice(0,nN).forEach((d,i)=>pluck(nextNote(scaleNote(k0+d)),.9-i*.12,ac&&ac.currentTime+i*.16));
   swell(scaleNote(k0)-12,.4+charge*.6);discover('palm');shake=charge*5}
-function bloomSeed(x,y){const h=nextHue();plant(x,y,U()*.028,'star',h);ring(x,y,U()*.02,h,.6);burstPetals(x,y,6,h,1.5);pluck(noteAtY(y),.8);bell(noteAtY(y),.5);discover('seed')}
+function bloomSeed(x,y){const h=nextHue();plant(x,y,U()*.028,'star',h);ring(x,y,U()*.02,h,.6);burstPetals(x,y,6,h,1.5);{const m=nextNote(noteAtY(y));pluck(m,.8);bell(m,.5)}discover('seed')}
 function bloomVine(v){if(v.pts.length<3)return;const step=Math.max(26,U()*.045);let acc=0,k=0;const t0=ac?ac.currentTime:0;
   for(let i=1;i<v.pts.length;i++){const a=v.pts[i-1],b=v.pts[i];acc+=Math.hypot(b.x-a.x,b.y-a.y);
-    if(acc>=step){acc=0;const d=k*.09;const h=(v.h+k*9)%360;plant(b.x,b.y,U()*(.018+Math.random()*.012),k%3===0?'sakura':'bud',h,d*1000);
-      setTimeout(()=>{ring(b.x,b.y,U()*.012,h,.5);burstPetals(b.x,b.y,3,h,1)},d*1000);pluck(noteAtY(b.y),.55,t0+d);k++;if(k>40)break}}
+    if(acc>=step){acc=0;const d=k*(SONGS[songKey].notes?.2:.09);const h=(v.h+k*9)%360;plant(b.x,b.y,U()*(.018+Math.random()*.012),k%3===0?'sakura':'bud',h,d*1000);
+      setTimeout(()=>{ring(b.x,b.y,U()*.012,h,.5);burstPetals(b.x,b.y,3,h,1)},d*1000);pluck(nextNote(noteAtY(b.y)),.6,t0+d);k++;if(k>40)break}}
   v.done=true;if(k>=4)discover('vine')}
 function bloomBurst(x,y,span){const h=nextHue(),n=12;
   for(let i=0;i<n;i++){const a=i/n*Math.PI*2,rr=span*.5;const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr*.7;plant(px,py,U()*.04,i%2?'sakura':'star',(h+i*18)%360,i*45)}
   plant(x,y,U()*.11,'peony',h,200);ring(x,y,span*.3,h,3);burstPetals(x,y,90,h,7);
-  const t0=ac?ac.currentTime:0;[0,2,4,5,7,9,10,12].forEach((k,i)=>pluck(scaleNote(5+k),.7,t0+i*.06));swell(36,1);flash=.6;shake=8;discover('burst')}
+  const t0=ac?ac.currentTime:0;[0,2,4,5,7,9,10,12].forEach((k,i)=>pluck(nextNote(scaleNote(5+k)),.7,t0+i*.12));swell(36,1);flash=.6;shake=8;discover('burst')}
 
 /* ---------------- input: hands (camera) and mouse ---------------- */
 const hands={};let shake=0,flash=0;
@@ -168,7 +197,7 @@ function updHand(st,f){ // f: {palm:{x,y}, openness, pinchD, pinchPt, tips}
   // sweep
   if(st.open&&!st.pinch&&st.speed>U()*.035&&now-st.sweepCool>130){st.sweepCool=now;const h=nextHue();
     (st.tips.length?st.tips:[st.palm]).forEach(p=>{for(let k=0;k<3;k++)petals.push({x:p.x,y:p.y,vx:(st.palm.x-st.pp.x)*.12+(Math.random()-.5)*2,vy:(st.palm.y-st.pp.y)*.12-1+(Math.random()-.5)*2,r:3+Math.random()*4,rot:Math.random()*6,vr:.1,life:1,h:h+(Math.random()-.5)*40})});
-    pluck(noteAtY(st.palm.y),.45);st.sweepN=(st.sweepN||0)+1;if(st.sweepN>6)discover('sweep')}
+    pluck(nextNote(noteAtY(st.palm.y)),.5);st.sweepN=(st.sweepN||0)+1;if(st.sweepN>6)discover('sweep')}
   if(st.speed<U()*.01)st.sweepN=0}
 // two-hand pull apart
 let spread={d:0,t:0,cool:0};
@@ -184,7 +213,7 @@ cv.addEventListener('pointerdown',e=>{audio();ptr={x:e.clientX,y:e.clientY,down:
 cv.addEventListener('pointermove',e=>{const x=e.clientX,y=e.clientY;
   if(ptr){ptr.moved+=Math.hypot(x-ptr.x,y-ptr.y);ptr.px=ptr.x;ptr.py=ptr.y;ptr.x=x;ptr.y=y;const l=ptr.vine.pts[ptr.vine.pts.length-1];if(Math.hypot(x-l.x,y-l.y)>4)ptr.vine.pts.push({x,y})}
   else{mouse.px=mouse.x;mouse.py=mouse.y;mouse.x=x;mouse.y=y;const v=Math.hypot(mouse.x-mouse.px,mouse.y-mouse.py);
-    if(v>U()*.05&&performance.now()-mouse.cool>130){mouse.cool=performance.now();const h=nextHue();for(let k=0;k<5;k++)petals.push({x,y,vx:(x-mouse.px)*.1+(Math.random()-.5)*2,vy:(y-mouse.py)*.1-1,r:3+Math.random()*4,rot:0,vr:.1,life:1,h});pluck(noteAtY(y),.4);mouse.n++;if(mouse.n>6)discover('sweep')}
+    if(v>U()*.05&&performance.now()-mouse.cool>130){mouse.cool=performance.now();const h=nextHue();for(let k=0;k<5;k++)petals.push({x,y,vx:(x-mouse.px)*.1+(Math.random()-.5)*2,vy:(y-mouse.py)*.1-1,r:3+Math.random()*4,rot:0,vr:.1,life:1,h});pluck(nextNote(noteAtY(y)),.45);mouse.n++;if(mouse.n>6)discover('sweep')}
     if(v<3)mouse.n=0}});
 const mouse={x:0,y:0,px:0,py:0,cool:0,n:0};
 addEventListener('pointerup',e=>{if(!ptr)return;const held=(performance.now()-ptr.down)/1000;
@@ -265,6 +294,8 @@ function frame(T){ctx.save();if(shake>0){ctx.translate((Math.random()-.5)*shake,
 
 /* ---------------- ui ---------------- */
 renderCards();requestAnimationFrame(frame);
+const sel=$('song');for(const k in SONGS){const o=document.createElement('option');o.value=k;o.textContent='曲子：'+SONGS[k].name;sel.appendChild(o)}
+sel.value=songKey;sel.onchange=()=>{songKey=sel.value;sIdx=0;songsDone=0;renderSong()};renderSong();
 $('goCam').onclick=async()=>{$('intro').hidden=true;await startCam()};
 $('goMouse').onclick=()=>{audio();$('intro').hidden=true;status('按住再松开、拖动、快速划过、双击，各开一种花',6000)};
 $('cam').onclick=()=>{if(!camOn){$('intro').hidden=true;startCam()}};
