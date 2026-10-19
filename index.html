@@ -1,13 +1,13 @@
 <!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
-<title>月下花园</title>
+<title>手势花园</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
-/* Layout: one full-bleed canvas is the whole world; menus and results float over it as soft glass panels. */
+/* Layout: the camera (or a dusk sky) fills the screen; a slim top bar, a row of gesture cards along the bottom, a start card in the middle. */
 :root{
-  --ink:#f6f2ff; --dim:rgba(246,242,255,.62); --glass:rgba(16,14,40,.42); --line:rgba(255,255,255,.16);
-  --sakura:#ffc2d4; --gold:#ffe7a8;
+  --ink:#fbf7ff; --dim:rgba(251,247,255,.66); --glass:rgba(18,14,38,.44); --line:rgba(255,255,255,.18);
+  --sakura:#ffc4d6; --gold:#ffe6a6;
   --display:"Shippori Mincho","Hiragino Mincho ProN","Songti SC",serif;
   --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
   color-scheme:dark;
@@ -15,360 +15,262 @@
 [hidden]{display:none!important}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:#0a0b22;color:var(--ink);font-family:var(--body);overflow:hidden;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#120e2a;color:var(--ink);font-family:var(--body);overflow:hidden;-webkit-tap-highlight-color:transparent}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 video{display:none}
-.layer{position:fixed;inset:0;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-y:auto}
-.menu{width:min(760px,100%);display:grid;gap:22px;text-align:center}
-.logo{font-family:var(--display);font-weight:800;font-size:clamp(2.6rem,9vw,5rem);letter-spacing:.18em;margin:0;line-height:1.1;text-shadow:0 0 40px rgba(255,194,212,.45)}
-.tag{margin:0;color:var(--dim);font-size:.95rem;letter-spacing:.06em;line-height:1.7;text-wrap:balance}
-.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;text-align:left}
-.lv{font:inherit;color:inherit;text-align:left;cursor:pointer;background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:16px 16px 14px;display:grid;gap:6px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .25s,border-color .25s}
-.lv:hover{transform:translateY(-3px);border-color:rgba(255,194,212,.6)}
-.lv:focus-visible,.btn:focus-visible{outline:2px solid var(--sakura);outline-offset:3px}
-.lv h3{margin:0;font-family:var(--display);font-size:1.25rem;letter-spacing:.06em}
-.lv p{margin:0;font-size:.78rem;color:var(--dim);line-height:1.55}
-.lv .meta{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:var(--dim);margin-top:4px}
-.stars{color:var(--gold);letter-spacing:2px;font-size:.9rem}
-.stars i{font-style:normal;opacity:.25}
-.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{font:inherit;font-size:.88rem;color:var(--ink);background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:9px 18px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-decoration:none}
+.top{position:fixed;top:0;left:0;right:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-block:calc(12px + env(safe-area-inset-top,0px)) 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
+.top>*{pointer-events:auto}
+.brand{font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:.14em;text-shadow:0 1px 12px rgba(0,0,0,.5);margin-right:auto}
+.btn{font:inherit;font-size:.84rem;color:var(--ink);background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-decoration:none;white-space:nowrap}
 .btn.on{background:var(--sakura);color:#2a1531;border-color:var(--sakura);font-weight:500}
-.how{font-size:.8rem;color:var(--dim);line-height:1.7;margin:0}
-.result{width:min(420px,100%);background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:26px 24px 20px;display:grid;gap:14px;text-align:center;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.result h2{margin:0;font-family:var(--display);font-size:1.5rem;letter-spacing:.1em}
-.rank{font-family:var(--display);font-weight:800;font-size:5rem;line-height:1;color:var(--gold);text-shadow:0 0 30px rgba(255,231,168,.6);animation:rk .6s cubic-bezier(.2,1.6,.4,1)}
-@keyframes rk{from{transform:scale(2.2);opacity:0}to{transform:scale(1);opacity:1}}
-@media (prefers-reduced-motion:reduce){.rank{animation:none}}
-.bigstars{font-size:2.4rem;color:var(--gold);letter-spacing:8px}
-.bigstars i{font-style:normal;opacity:.2}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.grid3 div{background:rgba(255,255,255,.05);border-radius:12px;padding:10px 4px}
-.grid3 b{display:block;font-size:1.3rem;font-variant-numeric:tabular-nums;font-family:var(--display)}
-.grid3 span{font-size:.7rem;color:var(--dim)}
-.note{font-size:.82rem;color:var(--dim);line-height:1.6;margin:0}
-.quit{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));z-index:5}
-.status{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom,0px));font-size:.8rem;color:var(--dim);text-align:center;pointer-events:none;max-width:90vw}
-@media (prefers-reduced-motion:reduce){.lv{transition:none}}
+.btn:focus-visible{outline:2px solid var(--sakura);outline-offset:3px}
+.cards{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding-block:0 calc(14px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
+.g{width:150px;min-width:0;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:9px 11px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:border-color .4s,box-shadow .4s,transform .4s}
+.g b{display:block;font-family:var(--display);font-size:.95rem;letter-spacing:.06em}
+.g span{display:block;font-size:.7rem;color:var(--dim);line-height:1.45;margin-top:2px}
+.g.found{border-color:rgba(255,230,166,.7);box-shadow:0 0 18px -4px rgba(255,230,166,.7)}
+.g.found b::after{content:" ✓";color:var(--gold);font-family:var(--body);font-size:.8rem}
+.g.flash{transform:translateY(-6px)}
+.count{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(118px + env(safe-area-inset-bottom,0px));font-size:.78rem;color:var(--dim);text-shadow:0 1px 8px #000}
+.layer{position:fixed;inset:0;display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px}
+.intro{width:min(520px,100%);text-align:center;display:grid;gap:16px;background:var(--glass);border:1px solid var(--line);border-radius:24px;padding:28px 24px 22px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.intro h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,8vw,3.4rem);letter-spacing:.16em;text-shadow:0 0 30px rgba(255,196,214,.5)}
+.intro p{margin:0;color:var(--dim);font-size:.9rem;line-height:1.75;text-wrap:balance}
+.intro .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.intro .btn{font-size:.95rem;padding:11px 20px}
+.status{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);font-size:.82rem;color:var(--ink);text-shadow:0 1px 8px #000;text-align:center;pointer-events:none;max-width:90vw}
+@media (max-width:640px){.g{width:calc(50% - 4px)}.g span{display:none}.count{bottom:calc(150px + env(safe-area-inset-bottom,0px))}}
+@media (prefers-reduced-motion:reduce){.g{transition:none}}
 </style>
 
 <canvas id="cv"></canvas>
 <video id="video" playsinline muted></video>
 
-<div class="layer" id="menu">
-  <div class="menu">
-    <div>
-      <h1 class="logo">月下花园</h1>
-      <p class="tag">花瓣随着节拍落下。挥手接住它，曲子就从你手里一个音一个音开出来。<br>连击越长，伴奏越满。</p>
-    </div>
-    <div class="levels" id="levels"></div>
-    <div class="row">
-      <button class="btn" id="cam">开启摄像头，用手挥</button>
-      <a class="btn" href="https://lauralin-lab.github.io/moon-keys/practice.html" target="_blank" rel="noopener">指法练习</a>
-    </div>
-    <p class="how" id="how">不开摄像头：用鼠标或手指在屏幕上划过花瓣。开摄像头：手举到镜头前，用食指尖或手掌去划。<br>光圈缩到最小那一刻挥过花瓣就是「満開」。要真的挥过去，停着不算。<br>漏接和碰到黑色夜蛾会扣月光，扣光就输。连击 30 进入「満月」，分数翻倍；每一轮都会更快。</p>
+<div class="top">
+  <div class="brand">手势花园</div>
+  <button class="btn" id="cam">开启摄像头</button>
+  <button class="btn" id="clear">清空花园</button>
+  <a class="btn" href="https://lauralin-lab.github.io/moon-keys/game.html" target="_blank" rel="noopener">接花瓣游戏</a>
+  <a class="btn" href="https://lauralin-lab.github.io/moon-keys/practice.html" target="_blank" rel="noopener">指法练习</a>
+</div>
+<div class="status" id="status"></div>
+<div class="count" id="count">已发现 0 / 5 种花</div>
+<div class="cards" id="cards"></div>
+
+<div class="layer" id="intro">
+  <div class="intro">
+    <h1>手势花园</h1>
+    <p>你的手就是花。握拳蓄力，张开就开花；捏一下种一颗种子；捏住拖动，长出一条花藤。<br>每朵花都会唱一个音，开过的花会留在画面里，慢慢长成你的花园。</p>
+    <div class="row"><button class="btn on" id="goCam">开启摄像头开始</button><button class="btn" id="goMouse">先用鼠标试试</button></div>
+    <p style="font-size:.78rem">鼠标：按住再松开＝握拳张开 · 按住拖动＝花藤 · 快速划过＝花吹雪 · 双击＝満開</p>
   </div>
 </div>
 
-<div class="layer" id="result" hidden><div class="result" id="resultBody"></div></div>
-<button class="btn quit" id="quit" hidden>退出</button>
-<div class="status" id="status"></div>
-
 <script>
 (()=>{
-/* ---------------- music data (public-domain melodies) ---------------- */
-const C=[48],G=[55];
-const LEVELS={
-  chocho:{name:'蝴蝶',jp:'ちょうちょう',sub:'春の朝 · 入门',desc:'日本春天的童谣，油菜花上飞的蝴蝶。节奏舒缓，先从这里开始。',
-    bpm:104,loops:2,hue:330,sky:['#2a1840','#7b4a7c','#f2a9b9'],
-    rh:[[[67,1],[64,1],[64,2],[65,1],[62,1],[62,2],[60,1],[62,1],[64,1],[65,1],[67,1],[67,1],[67,2]],
-        [[67,1],[64,1],[64,1],[64,1],[65,1],[62,1],[62,1],[62,1],[60,1],[64,1],[67,1],[67,1],[64,1],[64,1],[64,2]],
-        [[62,1],[62,1],[62,1],[62,1],[62,1],[64,1],[65,2],[64,1],[64,1],[64,1],[64,1],[64,1],[65,1],[67,2]],
-        [[67,1],[64,1],[64,1],[64,1],[65,1],[62,1],[62,1],[62,1],[60,1],[64,1],[67,1],[67,1],[60,3]]],
-    lh:[[[0,48],[3,55],[6,48],[10,48]],[[0,48],[4,55],[8,48],[12,48]],[[0,55],[4,55],[7,48],[11,48]],[[0,48],[4,55],[8,48],[12,48]]]},
-  ode:{name:'欢乐颂',jp:'歓喜の歌',sub:'夏の夜 · 普通',desc:'贝多芬第九交响曲的主题。音一级一级地走，手要跟着左右滑。',
-    bpm:112,loops:2,hue:170,sky:['#071c26','#0f4550','#5aa39b'],
-    rh:[[[64,1],[64,1],[65,1],[67,1],[67,1],[65,1],[64,1],[62,1],[60,1],[60,1],[62,1],[64,1],[64,1.5],[62,.5],[62,2]],
-        [[64,1],[64,1],[65,1],[67,1],[67,1],[65,1],[64,1],[62,1],[60,1],[60,1],[62,1],[64,1],[62,1.5],[60,.5],[60,2]]],
-    lh:[[[0,48],[4,55],[8,48],[12,55]],[[0,48],[4,55],[8,48],[12,55],[14,48]]]},
-  moon:{name:'月光',jp:'月光ソナタ',sub:'月夜 · 困难',desc:'贝多芬《月光奏鸣曲》开头的三连音。花瓣像水波一样一起一伏，要连着挥。',
-    bpm:126,loops:3,hue:250,sky:['#05061a','#141a4a','#3a3f86'],moon:true,
-    rh:[[[56,1],[61,1],[64,1],[56,1],[61,1],[64,1],[56,1],[61,1],[64,1],[56,1],[61,1],[64,1]],
-        [[56,1],[61,1],[64,1],[56,1],[61,1],[64,1],[57,1],[61,1],[64,1],[57,1],[61,1],[64,1]],
-        [[57,1],[62,1],[66,1],[57,1],[62,1],[66,1],[56,1],[61,1],[64,1],[56,1],[61,1],[64,2]]],
-    lh:[[[0,49]],[[0,47]],[[0,45],[6,44]]]}
-};
-const FREE={name:'自由花园',sub:'没有对错 · 放松',desc:'像 Bloom 一样，在哪里划都只会开出好听的音。你弹过的旋律会慢慢回响。',hue:285,sky:['#0d0b26','#2b1f55','#6a4b8f']};
-const NAMES=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
-const nm=m=>NAMES[m%12];
-
-/* ---------------- canvas ---------------- */
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d'),video=$('video');
 let W=0,H=0,DPR=1,motes=[];
 function resize(){DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
-  motes=Array.from({length:Math.round(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+.3,v:Math.random()*.25+.05,p:Math.random()*6}));
-  if(lvl&&lvl.rh)buildTree();}
-addEventListener('resize',resize);
+  motes=Array.from({length:Math.round(W*H/10000)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3,v:Math.random()*.25+.05,p:Math.random()*6}))}
+addEventListener('resize',resize);resize();
+const U=()=>Math.min(W,H);
 
-/* ---------------- audio ---------------- */
-let ac,out,lp,rev,dly;
+/* ---------------- sound: everything lands on a C major pentatonic, so nothing sounds wrong ---------------- */
+let ac,out,rev,dly;
 function audio(){if(ac)return;ac=new (window.AudioContext||window.webkitAudioContext)();
-  const comp=ac.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=3;comp.connect(ac.destination);
-  lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=16000;lp.Q.value=.7;lp.connect(comp);
-  out=ac.createGain();out.gain.value=.85;out.connect(lp);
-  const conv=ac.createConvolver(),len=ac.sampleRate*3.2,ir=ac.createBuffer(2,len,ac.sampleRate);
-  for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6)}
-  conv.buffer=ir;rev=ac.createGain();rev.gain.value=.5;rev.connect(conv);const rg=ac.createGain();rg.gain.value=.55;conv.connect(rg);rg.connect(lp);
-  dly=ac.createDelay(1);dly.delayTime.value=.42;const fb=ac.createGain();fb.gain.value=.38;dly.connect(fb);fb.connect(dly);dly.connect(rev);const dg=ac.createGain();dg.gain.value=.4;dly.connect(dg);dg.connect(out);}
+  const comp=ac.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=3;comp.connect(ac.destination);
+  out=ac.createGain();out.gain.value=.8;out.connect(comp);
+  const conv=ac.createConvolver(),len=ac.sampleRate*3.5,ir=ac.createBuffer(2,len,ac.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5)}
+  conv.buffer=ir;rev=ac.createGain();rev.gain.value=.6;rev.connect(conv);const rg=ac.createGain();rg.gain.value=.6;conv.connect(rg);rg.connect(comp);
+  dly=ac.createDelay(1);dly.delayTime.value=.45;const fb=ac.createGain();fb.gain.value=.35;dly.connect(fb);fb.connect(dly);dly.connect(rev);
+  // a soft bed underneath
+  const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=420;const g=ac.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.03,ac.currentTime+4);f.connect(g);g.connect(rev);g.connect(out);
+  [36,43,48,52].forEach(m=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=hz(m);o.detune.value=(Math.random()-.5)*12;o.connect(f);o.start()})}
 const hz=m=>440*2**((m-69)/12);
-function env(g,t,a,peak,dec){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0005,t+dec)}
-function pluck(m,vel=1,when){audio();const t=Math.max(when||0,ac.currentTime),f=hz(m);const g=ac.createGain();env(g,t,.005,.3*vel,2.6);g.connect(out);g.connect(rev);
-  [[1,1,2.6],[2,.4,1.5],[3,.16,.9],[4,.06,.5]].forEach(([h,a,d])=>{const o=ac.createOscillator(),og=ac.createGain();o.frequency.value=f*h*(1+(h-1)*.0008);og.gain.setValueAtTime(a,t);og.gain.exponentialRampToValueAtTime(.0004,t+d);o.connect(og);og.connect(g);o.start(t);o.stop(t+2.7)})}
-function bass(m,when){const t=Math.max(when,ac.currentTime);const g=ac.createGain();env(g,t,.01,.28,1.6);g.connect(out);g.connect(rev);
-  const o=ac.createOscillator();o.type='triangle';o.frequency.value=hz(m);o.connect(g);o.start(t);o.stop(t+1.7);
-  const s=ac.createOscillator();s.frequency.value=hz(m-12);const sg=ac.createGain();sg.gain.value=.5;s.connect(sg);sg.connect(g);s.start(t);s.stop(t+1.7)}
-function pad(m,when,dur){const t=Math.max(when,ac.currentTime);const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=900;const g=ac.createGain();
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06,t+Math.min(.8,dur*.4));g.gain.linearRampToValueAtTime(0,t+dur+.6);f.connect(g);g.connect(rev);g.connect(out);
-  [m,m+7,m+12].forEach((n,i)=>[-6,6].forEach(dt=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=hz(n);o.detune.value=dt;o.connect(f);o.start(t);o.stop(t+dur+.7)}))}
-function bell(m,when){const t=Math.max(when,ac.currentTime);const g=ac.createGain();env(g,t,.003,.07,1.4);g.connect(dly);g.connect(out);
-  [1,2.76,5.4].forEach((r,i)=>{const o=ac.createOscillator();o.frequency.value=hz(m+24)*r;const og=ac.createGain();og.gain.value=[1,.3,.12][i];o.connect(og);og.connect(g);o.start(t);o.stop(t+1.5)})}
-function thud(){const t=ac.currentTime;const g=ac.createGain();env(g,t,.005,.12,.35);g.connect(out);const o=ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(60,t+.3);o.connect(g);o.start(t);o.stop(t+.4);
-  lp.frequency.cancelScheduledValues(t);lp.frequency.setValueAtTime(lp.frequency.value,t);lp.frequency.exponentialRampToValueAtTime(700,t+.08);lp.frequency.exponentialRampToValueAtTime(16000,t+1.4)}
+const PENTA=[0,2,4,7,9];
+function scaleNote(k){k=Math.max(0,Math.min(19,Math.round(k)));return 48+12*Math.floor(k/5)+PENTA[k%5]}
+const noteAtY=y=>scaleNote((1-y/H)*16+2);
+function pluck(m,vel=1,when=0){if(!ac)return;const t=Math.max(ac.currentTime,when);const f=hz(m),g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.26*vel,t+.006);g.gain.exponentialRampToValueAtTime(.0005,t+2.8);g.connect(out);g.connect(rev);g.connect(dly);
+  [[1,1,2.8],[2,.38,1.5],[3,.14,.9],[4,.05,.5]].forEach(([h,a,d])=>{const o=ac.createOscillator(),og=ac.createGain();o.frequency.value=f*h*(1+(h-1)*.0008);og.gain.setValueAtTime(a,t);og.gain.exponentialRampToValueAtTime(.0004,t+d);o.connect(og);og.connect(g);o.start(t);o.stop(t+2.9)})}
+function bell(m,vel=.6,when=0){if(!ac)return;const t=Math.max(ac.currentTime,when),g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06*vel,t+.003);g.gain.exponentialRampToValueAtTime(.0004,t+1.6);g.connect(dly);g.connect(out);
+  [1,2.76,5.4].forEach((r,i)=>{const o=ac.createOscillator(),og=ac.createGain();o.frequency.value=hz(m+12)*r;og.gain.value=[1,.3,.1][i];o.connect(og);og.connect(g);o.start(t);o.stop(t+1.7)})}
+function swell(root,amt){if(!ac)return;const t=ac.currentTime,f=ac.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(400,t);f.frequency.linearRampToValueAtTime(1800*amt+600,t+.6);
+  const g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.07*amt,t+.25);g.gain.exponentialRampToValueAtTime(.0005,t+4);f.connect(g);g.connect(rev);g.connect(out);
+  [root,root+7,root+12,root+16].forEach(m=>[-7,7].forEach(d=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=hz(m);o.detune.value=d;o.connect(f);o.start(t);o.stop(t+4.2)}))}
 
-/* ---------------- game state ---------------- */
-const FALL=2.3,WIN=.24,PERF=.075,GOOD=.15;
-const LAYERS=[[0,'旋律'],[8,'＋ 低音'],[16,'＋ 和声'],[28,'＋ 钟声']];
-let lvl=null,lkey='',state='menu',notes=[],bassEv=[],moths=[],t0=0,combo=0,maxCombo=0,score=0,counts={p:0,g:0,o:0,m:0},endT=0,pitchLo=48,pitchHi=72;
-let life=100,shownLife=100,fever=false,banner=null,halves=[],slashes=[],shownScore=0,lostAt=0,hurt=0,goT=0;
-const fx=[],petals=[],pops=[],echoes=[];let flash=0,shake=0,lastNote=null,lastNoteT=0;
-function layer(){let k=0;LAYERS.forEach((l,i)=>{if(combo>=l[0])k=i});return k}
-function now(){return ac?ac.currentTime-t0:0}
+/* ---------------- flowers ---------------- */
+const garden=[],fx=[],petals=[],vines=[],seeds=[];
+function petalPath(r,w=.6){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(r*w*.9,-r*.35,r*w,-r*.95,0,-r*1.1);ctx.bezierCurveTo(-r*w,-r*.95,-r*w*.9,-r*.35,0,0);ctx.closePath()}
+// kind: sakura (5 petals), star (6 thin), peony (two rings), bud (4 small)
+function flower(x,y,r,rot,h,a,kind='sakura',open=1){if(r<=.3)return;ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=a;
+  const ring=(n,rr,w,l,off)=>{for(let p=0;p<n;p++){ctx.save();ctx.rotate(off+p*Math.PI*2/n);ctx.scale(1,.35+.65*open);petalPath(rr,w);const g=ctx.createLinearGradient(0,0,0,-rr);g.addColorStop(0,'#fff');g.addColorStop(1,`hsl(${h} 85% ${l}%)`);ctx.fillStyle=g;ctx.fill();ctx.restore()}};
+  if(kind==='peony'){ring(8,r*1.15,.55,74,0);ring(6,r*.8,.62,82,.3);ring(5,r*.48,.7,90,.1)}
+  else if(kind==='star')ring(6,r,.32,80,0);
+  else if(kind==='bud')ring(4,r,.75,84,0);
+  else ring(5,r,.6,78,0);
+  ctx.beginPath();ctx.arc(0,0,r*.16,0,7);ctx.fillStyle='#fff2c6';ctx.fill();
+  if(kind!=='bud')for(let k=0;k<6;k++){const a2=k*1.047+.3;ctx.beginPath();ctx.arc(Math.cos(a2)*r*.26,Math.sin(a2)*r*.26,r*.035+.6,0,7);ctx.fillStyle='#ffd77a';ctx.fill()}
+  ctx.restore();ctx.globalAlpha=1}
+function glow(x,y,r,h,a,l=78){if(r<=0)return;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`hsla(${h},90%,${l}%,${a})`);g.addColorStop(1,`hsla(${h},90%,${l}%,0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2)}
+let hueBase=330;const nextHue=()=>{hueBase=(hueBase+23+Math.random()*20)%360;return hueBase};
+function plant(x,y,r,kind,h,delay=0){garden.push({x,y,r,kind,h,rot:Math.random()*6,born:performance.now()+delay,life:45000});if(garden.length>160)garden.shift()}
+function burstPetals(x,y,n,h,sp=3.4){for(let k=0;k<n;k++){const a=Math.random()*6.3,v=.8+Math.random()*sp;petals.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.2,r:3+Math.random()*5,rot:Math.random()*6,vr:(Math.random()-.5)*.16,life:1,h:h+(Math.random()-.5)*30})}}
+function ring(x,y,r,h,s=1){fx.push({x,y,r,h,t:0,s})}
 
-function buildChart(L){notes=[];bassEv=[];moths=[];let t=0;
-  for(let lp=0;lp<L.loops;lp++){const spb=60/(L.bpm*(1+lp*.1)); // every round is 10% faster
-    L.rh.forEach((ph,pi)=>{const lh=L.lh[pi]||[];ph.forEach(([m,b],i)=>{notes.push({m,t,st:'wait',x:0,y:0,lp});
-      const l=lh.find(x=>x[0]===i);if(l)bassEv.push({m:l[1],t,done:false});
-      // a moth sometimes drifts down in the gap after a note, from rounds 2 on
-      if(lp>0&&b>=1&&Math.random()<.16+lp*.06)moths.push({t:t+b*spb*.5,m,st:'wait',x:0,y:0,side:Math.random()<.5?-1:1});
-      t+=b*spb})});t+=2*spb}
-  for(let i=0;i<bassEv.length;i++)bassEv[i].dur=((bassEv[i+1]?bassEv[i+1].t:bassEv[i].t+2)-bassEv[i].t);
-  pitchLo=Math.min(...notes.map(n=>n.m))-1;pitchHi=Math.max(...notes.map(n=>n.m))+1;
-  endT=notes[notes.length-1].t+2.2;notes.forEach((n,i)=>n.i=i);}
-const noteX=m=>W*(.14+.72*(m-pitchLo)/Math.max(1,pitchHi-pitchLo));
-const lineY=()=>H*.6;
-const PR=()=>Math.max(18,Math.min(W,H)*.036);
-function hue(m){return ((lvl?lvl.hue:300)+(m%12)*14)%360}
+/* ---------------- gesture discoveries ---------------- */
+const GEST=[
+  ['palm','掌に咲く','握拳，停一下，再张开。握得越久花越大'],
+  ['seed','種まき','拇指和食指捏一下再松开'],
+  ['vine','藤の道','捏住不放，拖动画线，松开满藤开花'],
+  ['sweep','花吹雪','张开手掌快速挥过去'],
+  ['burst','満開','两只手张开，从中间往两边拉开']];
+const found=new Set();
+function renderCards(){$('cards').innerHTML=GEST.map(([k,n,d])=>`<div class="g${found.has(k)?' found':''}" id="g_${k}"><b>${n}</b><span>${d}</span></div>`).join('');$('count').textContent=`已发现 ${found.size} / 5 种花`}
+let banner=null;
+function discover(k){if(found.has(k))return;found.add(k);renderCards();const el=$('g_'+k);if(el){el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),700)}
+  const g=GEST.find(x=>x[0]===k);banner={a:'新しい花',b:g[1],t:0};if(found.size===5)setTimeout(()=>{banner={a:'花園完成',b:'五种花全部开过了',t:0}},2200)}
 
-function start(key){audio();ac.resume&&ac.resume();lkey=key;lvl=key==='free'?FREE:LEVELS[key];
-  $('menu').hidden=true;$('result').hidden=true;$('quit').hidden=false;combo=0;maxCombo=0;score=0;shownScore=0;counts={p:0,g:0,o:0,m:0};fx.length=0;echoes.length=0;life=shownLife=100;fever=false;banner=null;halves.length=0;slashes.length=0;hurt=0;goT=0;
-  if(key==='free'){state='free';droneStart();setStatus(camOn?'挥手开花 · 你弹过的会慢慢回响':'在屏幕上点或划 · 你弹过的会慢慢回响');return}
-  buildChart(lvl);buildTree();grown=[];t0=ac.currentTime+3;state='play';setStatus('')}
-function quit(){state='menu';droneStop();$('quit').hidden=true;$('result').hidden=true;$('menu').hidden=false;renderMenu();setStatus('')}
+/* ---------------- the five blooms ---------------- */
+function bloomPalm(x,y,charge){const h=nextHue(),r=U()*(.045+.065*charge),kind=charge>.75?'peony':'sakura';
+  plant(x,y,r,kind,h);ring(x,y,r,h,1+charge);burstPetals(x,y,14+charge*30,h,3+charge*3);
+  const k0=Math.round((1-y/H)*16+2);[0,2,4,7].slice(0,2+Math.round(charge*2)).forEach((d,i)=>pluck(scaleNote(k0+d),.9-i*.12,ac&&ac.currentTime+i*.07));
+  swell(scaleNote(k0)-12,.4+charge*.6);discover('palm');shake=charge*5}
+function bloomSeed(x,y){const h=nextHue();plant(x,y,U()*.028,'star',h);ring(x,y,U()*.02,h,.6);burstPetals(x,y,6,h,1.5);pluck(noteAtY(y),.8);bell(noteAtY(y),.5);discover('seed')}
+function bloomVine(v){if(v.pts.length<3)return;const step=Math.max(26,U()*.045);let acc=0,k=0;const t0=ac?ac.currentTime:0;
+  for(let i=1;i<v.pts.length;i++){const a=v.pts[i-1],b=v.pts[i];acc+=Math.hypot(b.x-a.x,b.y-a.y);
+    if(acc>=step){acc=0;const d=k*.09;const h=(v.h+k*9)%360;plant(b.x,b.y,U()*(.018+Math.random()*.012),k%3===0?'sakura':'bud',h,d*1000);
+      setTimeout(()=>{ring(b.x,b.y,U()*.012,h,.5);burstPetals(b.x,b.y,3,h,1)},d*1000);pluck(noteAtY(b.y),.55,t0+d);k++;if(k>40)break}}
+  v.done=true;if(k>=4)discover('vine')}
+function bloomBurst(x,y,span){const h=nextHue(),n=12;
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,rr=span*.5;const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr*.7;plant(px,py,U()*.04,i%2?'sakura':'star',(h+i*18)%360,i*45)}
+  plant(x,y,U()*.11,'peony',h,200);ring(x,y,span*.3,h,3);burstPetals(x,y,90,h,7);
+  const t0=ac?ac.currentTime:0;[0,2,4,5,7,9,10,12].forEach((k,i)=>pluck(scaleNote(5+k),.7,t0+i*.06));swell(36,1);flash=.6;shake=8;discover('burst')}
 
-/* the branch: one blossom per note, coloured when you got it in full bloom */
-let tree={segs:[],slots:[]},grown=[];
-function rng(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
-function buildTree(){const r=rng(lkey.length*7919+13),segs=[],slots=[],unit=Math.min(W,H*1.5);
-  (function grow(x,y,a,len,w,d,o){const bd=(r()-.5)*.6,ex=x+Math.cos(a)*len,ey=y+Math.sin(a)*len,cx=x+Math.cos(a+bd)*len*.5,cy=y+Math.sin(a+bd)*len*.5;segs.push({x,y,cx,cy,ex,ey,w,o});
-    for(const t of [.5,.85,1]){const q=1-t;slots.push({x:q*q*x+2*q*t*cx+t*t*ex+(r()-.5)*w*3,y:q*q*y+2*q*t*cy+t*t*ey+(r()-.5)*w*3,o:o+t,rot:r()*6})}
-    if(d<=0)return;const n=d>3?2:1+(r()<.6);for(let k=0;k<n;k++)grow(ex,ey,a+(k?1:-1)*(.35+r()*.5),len*(.66+r()*.12),w*.68,d-1,o+1)})(W+unit*.02,H*.1,Math.PI-.15,unit*.2,Math.max(5,unit*.011),5,0);
-  slots.forEach(s=>s.y=Math.min(s.y,H*.42));slots.sort((a,b)=>a.o-b.o);
-  const N=notes.length||1;tree={segs,slots:Array.from({length:N},(_,i)=>slots[Math.floor(i*slots.length/N)])}}
+/* ---------------- input: hands (camera) and mouse ---------------- */
+const hands={};let shake=0,flash=0;
+function handState(id){return hands[id]||(hands[id]={id,open:false,closedAt:0,charge:0,pinch:false,pinchAt:0,vine:null,palm:null,pp:null,speed:0,lastSeen:0,sweepCool:0,tickAt:0,tips:[]})}
+function updHand(st,f){ // f: {palm:{x,y}, openness, pinchD, pinchPt, tips}
+  const now=performance.now();st.lastSeen=now;st.pp=st.palm||f.palm;st.palm=f.palm;st.speed=Math.hypot(st.palm.x-st.pp.x,st.palm.y-st.pp.y);st.tips=f.tips;
+  const wasOpen=st.open;
+  if(f.openness<1.3&&!st.pinch){if(st.open||!st.closedAt){st.open=false;st.closedAt=now}}
+  else if(f.openness>1.65){st.open=true}
+  // charging fist
+  if(!st.open&&st.closedAt){const held=(now-st.closedAt)/1000;st.charge=Math.min(1,Math.max(0,(held-.15)/1.4));
+    if(held>.3&&now-st.tickAt>380){st.tickAt=now;bell(scaleNote(4+Math.round(st.charge*8)),.35)}}
+  if(st.open&&!wasOpen&&st.closedAt){const held=(now-st.closedAt)/1000;if(held>.18&&held<6)bloomPalm(st.palm.x,st.palm.y,st.charge);st.closedAt=0;st.charge=0}
+  // pinch: seed or vine
+  if(!st.pinch&&f.pinchD<.3&&f.openness>1.0){st.pinch=true;st.pinchAt=now;st.vine={pts:[{...f.pinchPt}],h:nextHue(),done:false};vines.push(st.vine);if(vines.length>14)vines.shift()}
+  else if(st.pinch){if(f.pinchD>.45){st.pinch=false;const v=st.vine;st.vine=null;let len=0;for(let i=1;i<v.pts.length;i++)len+=Math.hypot(v.pts[i].x-v.pts[i-1].x,v.pts[i].y-v.pts[i-1].y);
+      if(len<U()*.08){vines.splice(vines.indexOf(v),1);bloomSeed(f.pinchPt.x,f.pinchPt.y)}else bloomVine(v)}
+    else{const l=st.vine.pts[st.vine.pts.length-1];if(Math.hypot(f.pinchPt.x-l.x,f.pinchPt.y-l.y)>4)st.vine.pts.push({...f.pinchPt})}}
+  // sweep
+  if(st.open&&!st.pinch&&st.speed>U()*.035&&now-st.sweepCool>130){st.sweepCool=now;const h=nextHue();
+    (st.tips.length?st.tips:[st.palm]).forEach(p=>{for(let k=0;k<3;k++)petals.push({x:p.x,y:p.y,vx:(st.palm.x-st.pp.x)*.12+(Math.random()-.5)*2,vy:(st.palm.y-st.pp.y)*.12-1+(Math.random()-.5)*2,r:3+Math.random()*4,rot:Math.random()*6,vr:.1,life:1,h:h+(Math.random()-.5)*40})});
+    pluck(noteAtY(st.palm.y),.45);st.sweepN=(st.sweepN||0)+1;if(st.sweepN>6)discover('sweep')}
+  if(st.speed<U()*.01)st.sweepN=0}
+// two-hand pull apart
+let spread={d:0,t:0,cool:0};
+function checkBurst(){const hs=Object.values(hands).filter(h=>performance.now()-h.lastSeen<200&&h.open&&h.palm);if(hs.length<2){spread.d=0;return}
+  const [a,b]=hs,d=Math.hypot(a.palm.x-b.palm.x,a.palm.y-b.palm.y),now=performance.now();
+  if(!spread.d||d<spread.d){spread.d=d;spread.t=now}
+  if(d-spread.d>W*.28&&now-spread.t<900&&now-spread.cool>2500){spread.cool=now;bloomBurst((a.palm.x+b.palm.x)/2,(a.palm.y+b.palm.y)/2,d);spread.d=0}
+  if(now-spread.t>900){spread.d=d;spread.t=now}}
 
-/* ---------------- input: cursors ---------------- */
-const cursors=new Map(); // id -> {x,y,px,py,seen,trail,kind,cool}
-function cur(id,x,y,kind){let c=cursors.get(id);const tn=performance.now();if(!c){c={x,y,px:x,py:y,trail:[],kind,cool:0};cursors.set(id,c)}
-  c.px=c.x;c.py=c.y;c.x=x;c.y=y;c.seen=tn;c.trail.push({x,y,t:tn});return c}
-cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||e.buttons)cur('p'+e.pointerId,e.clientX,e.clientY,'ptr')});
-cv.addEventListener('pointerdown',e=>{audio();const c=cur('p'+e.pointerId,e.clientX,e.clientY,'ptr');if(state==='free')freeNote(c.x,c.y,1)});
-cv.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse')cursors.delete('p'+e.pointerId)});
-cv.addEventListener('pointerleave',e=>cursors.delete('p'+e.pointerId));
+// mouse / touch: hold = fist, drag = vine, flick = sweep, double-click = burst
+let ptr=null;
+cv.addEventListener('pointerdown',e=>{audio();ptr={x:e.clientX,y:e.clientY,down:performance.now(),moved:0,vine:{pts:[{x:e.clientX,y:e.clientY}],h:nextHue(),done:false},px:e.clientX,py:e.clientY};vines.push(ptr.vine)});
+cv.addEventListener('pointermove',e=>{const x=e.clientX,y=e.clientY;
+  if(ptr){ptr.moved+=Math.hypot(x-ptr.x,y-ptr.y);ptr.px=ptr.x;ptr.py=ptr.y;ptr.x=x;ptr.y=y;const l=ptr.vine.pts[ptr.vine.pts.length-1];if(Math.hypot(x-l.x,y-l.y)>4)ptr.vine.pts.push({x,y})}
+  else{mouse.px=mouse.x;mouse.py=mouse.y;mouse.x=x;mouse.y=y;const v=Math.hypot(mouse.x-mouse.px,mouse.y-mouse.py);
+    if(v>U()*.05&&performance.now()-mouse.cool>130){mouse.cool=performance.now();const h=nextHue();for(let k=0;k<5;k++)petals.push({x,y,vx:(x-mouse.px)*.1+(Math.random()-.5)*2,vy:(y-mouse.py)*.1-1,r:3+Math.random()*4,rot:0,vr:.1,life:1,h});pluck(noteAtY(y),.4);mouse.n++;if(mouse.n>6)discover('sweep')}
+    if(v<3)mouse.n=0}});
+const mouse={x:0,y:0,px:0,py:0,cool:0,n:0};
+addEventListener('pointerup',e=>{if(!ptr)return;const held=(performance.now()-ptr.down)/1000;
+  if(ptr.moved>U()*.08){bloomVine(ptr.vine)}else{vines.splice(vines.indexOf(ptr.vine),1);if(held>.25)bloomPalm(ptr.x,ptr.y,Math.min(1,(held-.15)/1.4));else bloomSeed(ptr.x,ptr.y)}ptr=null});
+cv.addEventListener('dblclick',e=>bloomBurst(e.clientX,e.clientY,U()*.6));
 
-/* ---------------- camera hands ---------------- */
+/* ---------------- camera + MediaPipe Hands ---------------- */
 const HANDS='https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/';
-let camOn=false,hands=null,busy=false,stream=null;
+let camOn=false,hp=null,busy=false,stream=null;
 function loadScript(src){return new Promise((res,rej)=>{if(window.Hands)return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
-async function startCam(){audio();setStatus('正在打开摄像头…');
+function status(t,ms){$('status').textContent=t;clearTimeout(status.t);if(ms)status.t=setTimeout(()=>$('status').textContent='',ms)}
+async function startCam(){audio();status('正在打开摄像头…');
   try{stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:false})}
-  catch(e){setStatus('这个窗口不让用摄像头。打开 lauralin-lab.github.io/moon-keys 就能用手挥；现在先用鼠标或手指划。');return}
+  catch(e){status('这里打不开摄像头。请在电脑的 Chrome 里打开 lauralin-lab.github.io/moon-keys ，并允许摄像头。现在可以先用鼠标玩。',9000);return false}
   video.srcObject=stream;await video.play();camOn=true;$('cam').classList.add('on');$('cam').textContent='摄像头已开启';
-  setStatus('加载手部识别（首次约 10 秒）…');
-  try{await loadScript(HANDS+'hands.js');hands=new Hands({locateFile:f=>HANDS+f});
-    hands.setOptions({maxNumHands:2,modelComplexity:0,minDetectionConfidence:.6,minTrackingConfidence:.5});hands.onResults(onHands);await hands.initialize();setStatus('举起手，用食指尖或手掌去划');setTimeout(()=>setStatus(''),3000);pump()}
-  catch(e){setStatus('手部识别加载失败（需要联网）。可以先用鼠标或手指划。')}}
-async function pump(){if(!camOn)return;if(video.readyState>=2&&!busy){busy=true;try{await hands.send({image:video})}catch(e){}busy=false}requestAnimationFrame(pump)}
+  status('加载手部识别（首次约 10 秒）…');
+  try{await loadScript(HANDS+'hands.js');hp=new Hands({locateFile:f=>HANDS+f});
+    hp.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.5});hp.onResults(onHands);await hp.initialize();
+    status('把手举到镜头前。先试试：握拳，停一下，张开',6000);pump();return true}
+  catch(e){status('手部识别加载失败，需要联网。可以先用鼠标玩。',8000);return false}}
+async function pump(){if(!camOn)return;if(video.readyState>=2&&!busy){busy=true;try{await hp.send({image:video})}catch(e){}busy=false}requestAnimationFrame(pump)}
+const D=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 function onHands(res){const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(W/vw,H/vh),dw=vw*s,dh=vh*s,ox=(W-dw)/2,oy=(H-dh)/2;
-  (res.multiHandLandmarks||[]).forEach((lm,i)=>{[8,9].forEach(j=>cur('h'+i+'_'+j,W-(ox+lm[j].x*dw),oy+lm[j].y*dh,j===8?'tip':'palm'))})}
-
-/* ---------------- free garden ---------------- */
-const PENTA=[0,2,4,7,9];let droneNodes=null;
-function freeNote(x,y,vel,echo){const steps=15,i=Math.max(0,Math.min(steps-1,Math.floor(x/W*steps)));const m=60-12+12*Math.floor(i/5)+PENTA[i%5]+(y<H*.33?12:0);
-  pluck(m,vel*(.7+.3*(1-y/H)));bloomAt(x,y,m,vel,echo);if(!echo)echoes.push({x,y,m,t:performance.now(),n:0});}
-function droneStart(){if(droneNodes)return;const t=ac.currentTime,g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.035,t+3);const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=500;f.connect(g);g.connect(rev);g.connect(out);
-  const os=[36,43,48].map(m=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=hz(m);o.detune.value=(Math.random()-.5)*10;o.connect(f);o.start();return o});droneNodes={g,os}}
-function droneStop(){if(!droneNodes||!ac)return;const t=ac.currentTime;droneNodes.g.gain.cancelScheduledValues(t);droneNodes.g.gain.setValueAtTime(droneNodes.g.gain.value,t);droneNodes.g.gain.linearRampToValueAtTime(0,t+1.2);droneNodes.os.forEach(o=>o.stop(t+1.3));droneNodes=null}
-
-/* ---------------- effects ---------------- */
-function bloomAt(x,y,m,s=1,faint){const h=hue(m);fx.push({x,y,h,t:0,s,faint});
-  const n=faint?4:Math.round(14*s);for(let k=0;k<n;k++){const a=Math.random()*6.3,v=1+Math.random()*3.4*s;petals.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.4,r:3+Math.random()*5,rot:Math.random()*6,vr:(Math.random()-.5)*.16,life:faint?.5:1,h})}}
-function pop(x,y,txt,col,small){pops.push({x,y,txt,col,t:0,small})}
-function showBanner(a,b){banner={a,b,t:0}}
-function breakCombo(){if(combo>=4)thud();if(fever)showBanner('月が隠れた','狂热结束');combo=0;fever=false}
-function damage(v,x,y){life-=v;hurt=1;shake=Math.max(shake,7);if(life<=0&&state==='play'){life=0;lose()}}
-function lose(){state='done';lostAt=performance.now();thud();setTimeout(()=>finish(true),1300)}
-function setStatus(t){$('status').textContent=t}
-
-function judge(n,c){const t=now(),dt=t-n.t;if(Math.abs(dt)>WIN)return false;
-  const g=Math.abs(dt)<PERF?'p':Math.abs(dt)<GOOD?'g':'o';n.st='hit';n.g=g;counts[g]++;combo++;maxCombo=Math.max(maxCombo,combo);
-  const gain=Math.round(({p:300,g:180,o:80})[g]*(1+Math.min(combo,50)/50)*(fever?2:1));score+=gain;
-  life=Math.min(100,life+({p:4,g:2,o:.5})[g]);
-  if(!fever&&combo>=30){fever=true;showBanner('満月','狂热模式 · 分数翻倍');}
-  else if([10,20,50,80,120].includes(combo))showBanner(combo+' 連','');
-  if(c){const a=Math.atan2(c.y-c.py,c.x-c.px);slashes.push({x:n.x,y:n.y,a,t:0,h:hue(n.m)});
-    [-1,1].forEach(sd=>halves.push({x:n.x,y:n.y,vx:Math.cos(a+sd*Math.PI/2)*3.2+Math.cos(a)*2,vy:Math.sin(a+sd*Math.PI/2)*3.2+Math.sin(a)*2-2,rot:a,vr:sd*.12,h:hue(n.m),sd,life:1}))}
-  const when=dt<0?t0+n.t:0; // early catches still sound on the beat
-  pluck(n.m,g==='p'?1:.8,when);if(layer()>=3)bell(n.m,when);
-  bloomAt(n.x,n.y,n.m,g==='p'?1.25:g==='g'?.95:.65);if(g==='p'){flash=.35;shake=Math.min(6,2+combo/12)}
-  pop(n.x,n.y-PR()*1.8,g==='p'?'満開':g==='g'?'咲いた':'つぼみ',g==='p'?'#ffe7a8':g==='g'?'#ffd0de':'#d8d4ea');pop(n.x,n.y+PR()*1.6,'+'+gain,'rgba(255,255,255,.75)',true);
-  const i=notes.indexOf(n);grown[i]={t:0,good:g==='p',h:hue(n.m)};lastNote=n.m;lastNoteT=performance.now();
-  if(c){c.cool=performance.now()}return true}
-
-function finish(lost){state='done';const N=notes.length,maxS=notes.length*300*2;const acc=(counts.p*3+counts.g*2+counts.o)/(3*N);
-  const stars=lost?0:acc>=.88?3:acc>=.7?2:acc>=.5?1:0;const rank=lost?'—':acc>=.95?'S':acc>=.88?'A':acc>=.7?'B':acc>=.5?'C':'D';try{const k='mg_best_'+lkey,b=+localStorage.getItem(k)||0;if(stars>b)localStorage.setItem(k,stars)}catch(e){}
-  const st=[1,2,3].map(i=>i<=stars?'★':'<i>★</i>').join('');
-  const tip=lost?'月光用完了。漏接和碰到夜蛾都会扣月光，接中花瓣会慢慢补回来。先保命，再追连击。':stars===3?'整枝都开满了。试试更难的一关，或者去「指法练习」用真实指法把这首弹一遍。':counts.m>N*.25?'漏掉的花瓣有点多。别追着花瓣跑，提前把手放在它要落的位置，等光圈缩到最小再划。':'早接和晚接都会变成小花。听着节拍划，比盯着花瓣更准。';
-  $('resultBody').innerHTML=`<h2>${lost?'花が散った':lvl.name+' · 通关'}</h2><div class="rank">${rank}</div><div class="bigstars">${st}</div>
-    <div class="grid3"><div><b>${counts.p}</b><span>満開</span></div><div><b>${maxCombo}</b><span>最高连击</span></div><div><b>${Math.round(score).toLocaleString()}</b><span>得分</span></div></div>
-    <p class="note">${tip}</p><div class="row"><button class="btn on" id="again">再来一次</button><button class="btn" id="back">选关</button></div>`;
-  $('result').hidden=false;$('again').onclick=()=>start(lkey);$('back').onclick=quit;
-  for(let k=0;k<70;k++)setTimeout(()=>petals.push({x:Math.random()*W,y:-10,vx:(Math.random()-.3)*1.4,vy:1+Math.random(),r:3+Math.random()*5,rot:Math.random()*6,vr:(Math.random()-.5)*.1,life:1.8,h:hue(60+k)}),k*45)}
+  const P=p=>({x:W-(ox+p.x*dw),y:oy+p.y*dh});
+  (res.multiHandLandmarks||[]).forEach((lm,i)=>{const lab=(res.multiHandedness&&res.multiHandedness[i]&&res.multiHandedness[i].label)||('h'+i);
+    const palmSize=D(lm[0],lm[9])||1e-3;const openness=[8,12,16,20].reduce((a,j)=>a+D(lm[j],lm[0]),0)/4/palmSize;
+    const pinchD=D(lm[4],lm[8])/palmSize;const pp=P({x:(lm[4].x+lm[8].x)/2,y:(lm[4].y+lm[8].y)/2});
+    updHand(handState(lab),{palm:P(lm[9]),openness,pinchD,pinchPt:pp,tips:[4,8,12,16,20].map(j=>P(lm[j]))})});
+  checkBurst()}
 
 /* ---------------- drawing ---------------- */
-function petalPath(r){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(r*.55,-r*.35,r*.6,-r*.95,0,-r*1.1);ctx.bezierCurveTo(-r*.6,-r*.95,-r*.55,-r*.35,0,0);ctx.closePath()}
-function flower(x,y,r,rot,h,a,l=78){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=a;
-  for(let p=0;p<5;p++){ctx.save();ctx.rotate(p*1.2566);petalPath(r);const g=ctx.createLinearGradient(0,0,0,-r);g.addColorStop(0,'#fff');g.addColorStop(1,`hsl(${h} 80% ${l}%)`);ctx.fillStyle=g;ctx.fill();ctx.restore()}
-  ctx.beginPath();ctx.arc(0,0,r*.17,0,7);ctx.fillStyle='#fff3cf';ctx.fill();ctx.restore();ctx.globalAlpha=1}
-function glow(x,y,r,h,a,l=75){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`hsla(${h},90%,${l}%,${a})`);g.addColorStop(1,`hsla(${h},90%,${l}%,0)`);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2)}
-
-function drawSky(T){const L=lvl||{sky:['#0a0b22','#241a4d','#5b3f7e'],hue:300};
+function drawBg(T){
   if(camOn&&video.readyState>=2){const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(W/vw,H/vh),dw=vw*s,dh=vh*s;
     ctx.save();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(video,(W-dw)/2,(H-dh)/2,dw,dh);ctx.restore();
-    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,L.sky[0]+'b0');g.addColorStop(.55,L.sky[1]+'40');g.addColorStop(1,L.sky[0]+'90');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
-  else{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,L.sky[0]);g.addColorStop(.62,L.sky[1]);g.addColorStop(1,L.sky[2]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    // slow breathing colour field, the Bloom feeling
-    for(let k=0;k<3;k++){const x=W*(.5+.38*Math.sin(T/9000+k*2.1)),y=H*(.45+.3*Math.cos(T/11000+k*1.7));glow(x,y,Math.max(W,H)*.45,(L.hue+k*40)%360,.13,60)}}
-  if(L.moon){const mx=W*.2,my=H*.17,mr=Math.max(22,Math.min(W,H)*.05);glow(mx,my,mr*5,48,.25,90);ctx.beginPath();ctx.arc(mx,my,mr,0,7);ctx.fillStyle='#fff6dc';ctx.fill()}
-  for(const s of motes){s.y-=s.v;if(s.y<-4){s.y=H+4;s.x=Math.random()*W}ctx.globalAlpha=.25+.4*(.5+.5*Math.sin(T/700+s.p));ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s.x+Math.sin(T/2000+s.p)*6,s.y,s.r,0,7);ctx.fill()}ctx.globalAlpha=1}
+    const g=ctx.createRadialGradient(W/2,H/2,U()*.3,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(20,10,40,0)');g.addColorStop(1,'rgba(20,10,40,.18)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+  else{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#120c2c');g.addColorStop(.6,'#3d2860');g.addColorStop(1,'#a3628a');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    for(let k=0;k<3;k++)glow(W*(.5+.4*Math.sin(T/9000+k*2.1)),H*(.5+.3*Math.cos(T/11000+k*1.7)),Math.max(W,H)*.45,(hueBase+k*50)%360,.12,62)}
+  for(const s of motes){s.y-=s.v;if(s.y<-4){s.y=H+4;s.x=Math.random()*W}ctx.globalAlpha=.2+.4*(.5+.5*Math.sin(T/700+s.p));ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s.x+Math.sin(T/2000+s.p)*6,s.y,s.r,0,7);ctx.fill()}ctx.globalAlpha=1}
 
-function drawWater(){const y=lineY();const g=ctx.createLinearGradient(0,y,0,H);g.addColorStop(0,'rgba(255,255,255,.07)');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,y,W,H-y);
-  ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W*.06,y);ctx.lineTo(W*.94,y);ctx.stroke()}
+function drawVines(T){ctx.lineCap='round';ctx.lineJoin='round';
+  for(const v of vines){if(v.pts.length<2)continue;const age=v.done?(performance.now()-(v.doneAt||(v.doneAt=performance.now())))/45000:0;const a=Math.max(0,1-age);if(a<=0)continue;
+    ctx.globalAlpha=a;ctx.beginPath();ctx.moveTo(v.pts[0].x,v.pts[0].y);for(let i=1;i<v.pts.length;i++){const p=v.pts[i],q=v.pts[i-1];ctx.quadraticCurveTo(q.x,q.y,(p.x+q.x)/2,(p.y+q.y)/2)}
+    ctx.strokeStyle='rgba(30,40,24,.55)';ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=`hsla(${(v.h+120)%360},50%,72%,.85)`;ctx.lineWidth=2;ctx.stroke();
+    for(let i=6;i<v.pts.length;i+=7){const p=v.pts[i],q=v.pts[i-1],an=Math.atan2(p.y-q.y,p.x-q.x)+(i%14?1:-1)*1.1;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(an);ctx.beginPath();ctx.ellipse(7,0,7,3,0,0,7);ctx.fillStyle=`hsla(${(v.h+110)%360},45%,62%,.8)`;ctx.fill();ctx.restore()}
+    ctx.globalAlpha=1}}
 
-function drawTree(T){if(!tree.segs.length)return;const done=grown.filter(Boolean).length,N=tree.slots.length||1,reach=1+done/N*6;ctx.lineCap='round';
-  for(const s of tree.segs){if(s.o>reach)continue;const a=Math.min(1,reach-s.o);ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.quadraticCurveTo(s.cx,s.cy,s.x+(s.ex-s.x)*a,s.y+(s.ey-s.y)*a);
-    ctx.strokeStyle='rgba(24,14,26,.8)';ctx.lineWidth=s.w;ctx.stroke();ctx.strokeStyle='rgba(255,236,226,.22)';ctx.lineWidth=Math.max(1,s.w*.22);ctx.stroke()}
-  const R=Math.max(9,Math.min(W,H)*.018);tree.slots.forEach((sl,i)=>{const g=grown[i];if(!g)return;g.t=Math.min(1,g.t+.05);const e=1-Math.pow(1-g.t,3);
-    flower(sl.x+Math.sin(T/1500+i)*1.5,sl.y,R*(g.good?1.1:.65)*e,sl.rot,g.good?g.h:250,g.good?.95:.55,g.good?78:86)})}
+function drawGarden(T){const now=performance.now();
+  for(let i=garden.length-1;i>=0;i--){const f=garden[i],age=now-f.born;if(age<0)continue;if(age>f.life){garden.splice(i,1);continue}
+    const grow=Math.min(1,age/700),e=1-Math.pow(1-grow,3),fade=age>f.life-6000?(f.life-age)/6000:1,sway=Math.sin(T/1600+i)*2;
+    if(grow<1)glow(f.x,f.y,f.r*3,f.h,.5*(1-grow),82);glow(f.x,f.y,f.r*1.8,f.h,.18*fade,80);
+    flower(f.x+sway,f.y,f.r*(.3+.7*e),f.rot+T/9000,f.h,.95*fade,f.kind,e)}}
 
-function drawNotes(T){const t=now(),R=PR(),ly=lineY();
-  for(const n of notes){if(n.st!=='wait')continue;const dt=n.t-t;if(dt>FALL)break;
-    if(dt<-WIN){n.st='miss';counts.m++;breakCombo();damage(8+n.lp*3,n.x,n.y);pop(n.x,ly-R*1.6,'散った','#a8a6c4');petals.push({x:n.x,y:ly,vx:0,vy:1.2,r:R*.5,rot:0,vr:.04,life:.8,h:250,grey:true});continue}
-    const p=1-dt/FALL,e=1-Math.pow(1-Math.min(1,p),2);n.x=noteX(n.m)+Math.sin(T/600+n.t*3)*W*.012*(1-e);n.y=-R*2+(ly+R*2)*e;
-    const h=hue(n.m);glow(n.x,n.y,R*2.6,h,.5);
-    if(dt<.9){const k=Math.max(0,dt)/.9;ctx.beginPath();ctx.arc(n.x,n.y,R*(1.05+k*2.6),0,7);ctx.strokeStyle=`hsla(${h},90%,85%,${.9-k*.6})`;ctx.lineWidth=2;ctx.stroke()}
-    flower(n.x,n.y,R*.95,T/1800+n.t,h,.95);
-    if(Math.abs(dt)<WIN&&cursors.size)for(const c of cursors.values()){if(performance.now()-c.seen>250)continue;
-      if(Math.hypot(c.x-c.px,c.y-c.py)<R*.3)continue; // you have to swing through, resting doesn't count
-      if(segDist(n.x,n.y,c.px,c.py,c.x,c.y)<R*1.9){judge(n,c);break}}}
-  drawMoths(T,t,R,ly)}
-function drawMoths(T,t,R,ly){for(const m of moths){if(m.st!=='wait')continue;const dt=m.t-t;if(dt>FALL)break;if(dt<-.6){m.st='gone';continue}
-    const p=1-dt/FALL;m.x=noteX(m.m)+m.side*W*.09+Math.sin(T/300+m.t*5)*W*.02;m.y=-R*2+(ly+R*3)*Math.min(1.15,p);
-    glow(m.x,m.y,R*2.2,350,.35,40);ctx.save();ctx.translate(m.x,m.y);const fl=Math.sin(T/60+m.t)*.5+.6;
-    for(const sd of[-1,1]){ctx.beginPath();ctx.ellipse(sd*R*.55,0,R*.6*fl+R*.15,R*.42,sd*.5,0,7);ctx.fillStyle='rgba(30,10,30,.92)';ctx.fill();ctx.strokeStyle='rgba(255,80,120,.8)';ctx.lineWidth=1.5;ctx.stroke()}
-    ctx.beginPath();ctx.ellipse(0,0,R*.16,R*.42,0,0,7);ctx.fillStyle='#120612';ctx.fill();ctx.restore();
-    for(const c of cursors.values()){if(performance.now()-c.seen>250||Math.hypot(c.x-c.px,c.y-c.py)<R*.3)continue;
-      if(segDist(m.x,m.y,c.px,c.py,c.x,c.y)<R*1.3){m.st='hit';breakCombo();damage(16,m.x,m.y);pop(m.x,m.y-R,'夜蛾！','#ff7a9a');
-        for(let k=0;k<10;k++){const a=Math.random()*6.3;petals.push({x:m.x,y:m.y,vx:Math.cos(a)*3,vy:Math.sin(a)*3,r:3+Math.random()*3,rot:0,vr:.2,life:.7,h:340,grey:true})}break}}}}
-function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let u=l?((px-ax)*dx+(py-ay)*dy)/l:0;u=Math.max(0,Math.min(1,u));return Math.hypot(px-ax-u*dx,py-ay-u*dy)}
+function drawHands(T){const now=performance.now();
+  for(const st of Object.values(hands)){if(now-st.lastSeen>300||!st.palm)continue;
+    st.tips.forEach((p,i)=>{glow(p.x,p.y,10,(hueBase+i*20)%360,.7,90)});
+    if(!st.open&&st.closedAt){const r=U()*(.025+.05*st.charge),k=.5+.5*Math.sin(T/(140-st.charge*80));glow(st.palm.x,st.palm.y,r*3.5,hueBase,.4+.4*st.charge,82);
+      flower(st.palm.x,st.palm.y,r*(.9+k*.1),T/700,hueBase,.95,'bud',.25+st.charge*.3);
+      ctx.beginPath();ctx.arc(st.palm.x,st.palm.y,r*2.2,-Math.PI/2,-Math.PI/2+Math.PI*2*st.charge);ctx.strokeStyle='rgba(255,230,166,.85)';ctx.lineWidth=3;ctx.stroke()}
+    if(st.pinch&&st.vine){const l=st.vine.pts[st.vine.pts.length-1];glow(l.x,l.y,22,st.vine.h,.8,88)}}
+  if(ptr){const held=(now-ptr.down)/1000;if(ptr.moved<U()*.08&&held>.25){const c=Math.min(1,(held-.15)/1.4),r=U()*(.025+.05*c);glow(ptr.x,ptr.y,r*3.5,hueBase,.5+.4*c,82);flower(ptr.x,ptr.y,r,T/700,hueBase,.95,'bud',.3+c*.3);
+    ctx.beginPath();ctx.arc(ptr.x,ptr.y,r*2.2,-Math.PI/2,-Math.PI/2+Math.PI*2*c);ctx.strokeStyle='rgba(255,230,166,.85)';ctx.lineWidth=3;ctx.stroke();
+    if(now-(ptr.tick||0)>380&&held>.3){ptr.tick=now;bell(scaleNote(4+Math.round(c*8)),.35)}}}}
 
-function drawFx(){const R=PR();
-  for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t+=.016;if(f.t>1.6){fx.splice(i,1);continue}
-    for(let k=0;k<3;k++){const tt=f.t-k*.18;if(tt<0)continue;const a=Math.max(0,1-tt/1.4);ctx.beginPath();ctx.arc(f.x,f.y,R*(1+tt*6*f.s),0,7);ctx.strokeStyle=`hsla(${f.h},90%,82%,${a*(f.faint?.35:.7)})`;ctx.lineWidth=(3-k)*a+.4;ctx.stroke()}
-    if(f.t<.8){glow(f.x,f.y,R*6*f.s,f.h,(1-f.t/.8)*(f.faint?.2:.55),80);const e=1-Math.pow(1-Math.min(1,f.t*2.5),3);flower(f.x,f.y,R*2*e*f.s,f.t,f.h,(1-f.t/.8)*(f.faint?.5:1))}}
-  for(let i=petals.length-1;i>=0;i--){const p=petals[i];p.vx*=.97;p.vy=p.vy*.97+.055;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life-=.0065;if(p.life<=0||p.y>H+20){petals.splice(i,1);continue}
-    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=Math.min(1,p.life*1.3);petalPath(p.r);ctx.fillStyle=p.grey?'rgba(170,168,196,.8)':`hsl(${p.h} 85% 82%)`;ctx.fill();ctx.restore()}ctx.globalAlpha=1;
-  for(let i=slashes.length-1;i>=0;i--){const s=slashes[i];s.t+=.06;if(s.t>1){slashes.splice(i,1);continue}const L=R*5*(.6+s.t);
-    ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.a);ctx.globalCompositeOperation='lighter';const g=ctx.createLinearGradient(-L,0,L,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,`hsla(${s.h},100%,92%,${1-s.t})`);g.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=g;ctx.fillRect(-L,-R*.12*(1-s.t)-1,L*2,R*.24*(1-s.t)+2);ctx.restore()}
-  for(let i=halves.length-1;i>=0;i--){const hv=halves[i];hv.vy+=.22;hv.x+=hv.vx;hv.y+=hv.vy;hv.rot+=hv.vr;hv.life-=.02;if(hv.life<=0){halves.splice(i,1);continue}
-    ctx.save();ctx.translate(hv.x,hv.y);ctx.rotate(hv.rot);ctx.beginPath();ctx.rect(-R*2,hv.sd>0?0:-R*2,R*4,R*2);ctx.clip();flower(0,0,R*1.05,0,hv.h,hv.life);ctx.restore()}
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  for(let i=pops.length-1;i>=0;i--){const p=pops[i];p.t+=.02;if(p.t>1){pops.splice(i,1);continue}ctx.globalAlpha=1-p.t*p.t;ctx.font=p.small?`700 ${Math.round(R*.5)}px "Noto Sans SC",sans-serif`:`800 ${Math.round(R*(.8+(1-p.t)*.35))}px "Shippori Mincho",serif`;ctx.lineWidth=4;ctx.strokeStyle='rgba(30,14,40,.5)';ctx.strokeText(p.txt,p.x,p.y-p.t*R*1.2);ctx.fillStyle=p.col;ctx.fillText(p.txt,p.x,p.y-p.t*R*1.2)}ctx.globalAlpha=1}
+function drawFx(){for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t+=.014;if(f.t>1.6){fx.splice(i,1);continue}
+    for(let k=0;k<3;k++){const tt=f.t-k*.16;if(tt<0)continue;const a=Math.max(0,1-tt/1.4);ctx.beginPath();ctx.arc(f.x,f.y,f.r+tt*U()*.18*f.s,0,7);ctx.strokeStyle=`hsla(${f.h},90%,85%,${a*.7})`;ctx.lineWidth=(3-k)*a+.5;ctx.stroke()}}
+  for(let i=petals.length-1;i>=0;i--){const p=petals[i];p.vx*=.97;p.vy=p.vy*.97+.05;p.x+=p.vx+Math.sin(p.y/60)*.3;p.y+=p.vy;p.rot+=p.vr;p.life-=.006;if(p.life<=0||p.y>H+20){petals.splice(i,1);continue}
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=Math.min(1,p.life*1.3);petalPath(p.r);ctx.fillStyle=`hsl(${p.h} 85% 83%)`;ctx.fill();ctx.restore()}ctx.globalAlpha=1;
+  if(petals.length>700)petals.splice(0,petals.length-700)}
 
-function drawCursors(){const tn=performance.now();ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.lineJoin='round';
-  for(const [id,c] of cursors){while(c.trail.length&&tn-c.trail[0].t>(state==='free'?1800:450))c.trail.shift();
-    if(tn-c.seen>600&&c.kind!=='ptr'){cursors.delete(id);continue}
-    const w=c.kind==='palm'?9:6;for(let j=1;j<c.trail.length;j++){const a=1-(tn-c.trail[j].t)/(state==='free'?1800:450);ctx.beginPath();ctx.moveTo(c.trail[j-1].x,c.trail[j-1].y);ctx.lineTo(c.trail[j].x,c.trail[j].y);
-      ctx.strokeStyle=fever&&state==='play'?`hsla(45,100%,75%,${a*.7})`:`hsla(${hue(60+j)},90%,80%,${a*.5})`;ctx.lineWidth=w*(.4+a);ctx.stroke()}
-    if(tn-c.seen<300){glow(c.x,c.y,w*4,hue(64),.6,88)}
-    if(state==='free'&&c.kind!=='ptr'){const v=Math.hypot(c.x-c.px,c.y-c.py);if(v>16&&tn-c.cool>170){c.cool=tn;freeNote(c.x,c.y,Math.min(1,v/40))}}}
-  ctx.restore()}
+function drawBanner(){if(!banner)return;banner.t+=.01;if(banner.t>1){banner=null;return}const a=banner.t<.12?banner.t/.12:1-(banner.t-.12)/.88;
+  ctx.globalAlpha=a;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`500 ${Math.round(U()*.028)}px "Noto Sans SC",sans-serif`;ctx.fillStyle='#ffe6a6';ctx.fillText(banner.a,W/2,H*.3-U()*.06);
+  ctx.font=`800 ${Math.round(U()*.075)}px "Shippori Mincho",serif`;ctx.lineWidth=6;ctx.strokeStyle='rgba(30,12,40,.5)';ctx.strokeText(banner.b,W/2,H*.3);ctx.fillStyle='#fff';ctx.fillText(banner.b,W/2,H*.3);ctx.globalAlpha=1}
 
-function drawHud(){const R=PR(),t=now();ctx.textAlign='left';ctx.textBaseline='top';
-  const pad=Math.max(16,W*.02);shownScore+=(score-shownScore)*.15;ctx.fillStyle='rgba(255,255,255,.95)';ctx.font=`800 ${Math.round(R*.85)}px "Shippori Mincho",serif`;ctx.fillText(Math.round(shownScore).toLocaleString(),pad,pad);
-  // life: a row of moon phases
-  shownLife+=(life-shownLife)*.12;const lw=Math.min(220,W*.3),lx=pad,ly2=pad+R*1.55;ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(lx,ly2,lw,6);
-  ctx.fillStyle=life<30?`rgba(255,110,140,${.7+.3*Math.sin(performance.now()/90)})`:'rgba(255,231,168,.9)';ctx.fillRect(lx,ly2,lw*shownLife/100,6);
-  ctx.font=`500 ${Math.round(R*.42)}px "Noto Sans SC",sans-serif`;ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillText(lvl.name+' · 第 '+(1+(notes.find(n=>n.st==='wait')||notes[notes.length-1]).lp)+' 轮',pad,pad+R*2);
-  // progress
-  const pr=Math.max(0,Math.min(1,t/endT));ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(0,0,W,3);ctx.fillStyle='rgba(255,210,225,.8)';ctx.fillRect(0,0,W*pr,3);
-  ctx.textAlign='center';
-  if(combo>=2){const s=1+Math.min(.5,combo/80);ctx.font=`800 ${Math.round(R*1.25*s)}px "Shippori Mincho",serif`;ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillText(combo,W/2,pad*.6);
-    ctx.font=`500 ${Math.round(R*.42)}px "Noto Sans SC",sans-serif`;ctx.fillStyle='rgba(255,231,168,.85)';ctx.fillText('连击 · '+LAYERS.slice(0,layer()+1).map(l=>l[1]).join(' '),W/2,pad*.6+R*1.4*s)}
-  if(t<0){const k=-t%1;ctx.globalAlpha=k;ctx.font=`800 ${Math.round(R*(2.4+(1-k)*1.2))}px "Shippori Mincho",serif`;ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(Math.ceil(-t),W/2,H*.34);ctx.globalAlpha=1}
-  else if(t<.9){ctx.globalAlpha=1-t/.9;ctx.textBaseline='middle';ctx.font=`800 ${Math.round(R*(3+t*2))}px "Shippori Mincho",serif`;ctx.fillStyle='#ffe7a8';ctx.fillText('始め',W/2,H*.34);ctx.globalAlpha=1}
-  if(banner){banner.t+=.012;if(banner.t>1)banner=null;else{const a=banner.t<.15?banner.t/.15:1-(banner.t-.15)/.85;ctx.globalAlpha=a;ctx.textBaseline='middle';
-    ctx.font=`800 ${Math.round(R*(2.6+(banner.t<.15?(1-banner.t/.15)*1.5:0)))}px "Shippori Mincho",serif`;ctx.lineWidth=6;ctx.strokeStyle='rgba(40,16,50,.55)';ctx.strokeText(banner.a,W/2,H*.3);ctx.fillStyle='#ffe7a8';ctx.fillText(banner.a,W/2,H*.3);
-    if(banner.b){ctx.font=`500 ${Math.round(R*.55)}px "Noto Sans SC",sans-serif`;ctx.fillStyle='#fff';ctx.fillText(banner.b,W/2,H*.3+R*2)}ctx.globalAlpha=1}}}
-
-function drawKeys(){const m0=pitchLo-3,m1=pitchHi+3,BL=[1,3,6,8,10];const whites=[];for(let m=m0;m<=m1;m++)if(!BL.includes(m%12))whites.push(m);
-  const kh=Math.min(56,H*.07),kw=Math.min(30,W*.8/whites.length),x0=(W-kw*whites.length)/2,y0=H-kh-10-(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('padding-bottom'))||0);
-  const lit=performance.now()-lastNoteT<300?lastNote:null;const pos={};
-  whites.forEach((m,i)=>{pos[m]=x0+i*kw;ctx.fillStyle=m===lit?`hsl(${hue(m)} 90% 85%)`:'rgba(255,255,255,.82)';ctx.fillRect(x0+i*kw+1,y0,kw-2,kh);
-    if(m%12===0){ctx.fillStyle='rgba(40,30,60,.5)';ctx.font=`500 ${Math.round(kw*.38)}px "Shippori Mincho",serif`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('ド',x0+i*kw+kw/2,y0+kh-3)}});
-  for(let m=m0;m<=m1;m++)if(BL.includes(m%12)&&pos[m-1]!=null){const x=pos[m-1]+kw*.68;ctx.fillStyle=m===lit?`hsl(${hue(m)} 80% 60%)`:'rgba(20,16,36,.92)';ctx.fillRect(x,y0,kw*.64,kh*.6)}
-  if(lit!=null){ctx.textAlign='center';ctx.textBaseline='bottom';ctx.font=`700 ${Math.round(kh*.36)}px "Shippori Mincho",serif`;ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillText(nm(lit),W/2,y0-6)}}
-
-function tick(){if(state!=='play'||!ac)return;const t=now(),L=layer();
-  for(const b of bassEv){if(b.done)continue;if(b.t-t>.12)break;b.done=true;if(L>=1)bass(b.m,t0+b.t);if(L>=2)pad(b.m+12,t0+b.t,b.dur)}
-  if(t>endT&&state==='play')finish(false)}
-setInterval(tick,25);
-
-function frame(T){ctx.save();if(shake>0){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.85;if(shake<.3)shake=0}
-  drawSky(T);
-  if(state==='play'||state==='done'){drawTree(T);drawWater();if(state==='play')drawNotes(T);drawFx();drawKeys();drawCursors();if(state==='play')drawHud()}
-  else{if(state==='free'){drawWater()}drawFx();drawCursors();
-    if(state==='free'){const tn=performance.now();for(let i=echoes.length-1;i>=0;i--){const e=echoes[i];const due=e.t+(e.n+1)*6200;if(tn>=due){e.n++;const v=[.5,.3,.16][e.n-1];if(v){pluck(e.m,v);fx.push({x:e.x,y:e.y,h:hue(e.m),t:0,s:.7,faint:true})}if(e.n>=3)echoes.splice(i,1)}}}}
-  if(flash>0){ctx.fillStyle=`rgba(255,240,245,${flash*(fever?.3:.18)})`;ctx.fillRect(0,0,W,H);flash*=.85;if(flash<.02)flash=0}
-  if(fever&&state==='play'){const k=.5+.5*Math.sin(T/200);const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(255,231,168,0)');g.addColorStop(1,`rgba(255,215,140,${.18+.1*k})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
-  if(hurt>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.7);g.addColorStop(0,'rgba(255,40,80,0)');g.addColorStop(1,`rgba(255,40,80,${hurt*.45})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);hurt*=.92;if(hurt<.02)hurt=0}
-  if(state==='done'&&lostAt&&performance.now()-lostAt<1300){const a=Math.min(1,(performance.now()-lostAt)/600);ctx.fillStyle=`rgba(8,6,20,${a*.6})`;ctx.fillRect(0,0,W,H);ctx.globalAlpha=a;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`800 ${Math.round(PR()*2.6)}px "Shippori Mincho",serif`;ctx.fillStyle='#ffd0de';ctx.fillText('花が散った',W/2,H*.4);ctx.globalAlpha=1}
+function frame(T){ctx.save();if(shake>0){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.86;if(shake<.3)shake=0}
+  drawBg(T);drawVines(T);drawGarden(T);drawFx();drawHands(T);drawBanner();
+  if(flash>0){ctx.fillStyle=`rgba(255,240,246,${flash*.3})`;ctx.fillRect(0,0,W,H);flash*=.9;if(flash<.02)flash=0}
   ctx.restore();requestAnimationFrame(frame)}
 
-/* ---------------- menu ---------------- */
-function best(k){try{return +localStorage.getItem('mg_best_'+k)||0}catch(e){return 0}}
-function renderMenu(){const box=$('levels');box.innerHTML='';
-  [...Object.entries(LEVELS),['free',FREE]].forEach(([k,L])=>{const b=document.createElement('button');b.className='lv';
-    const s=best(k),st=k==='free'?'':[1,2,3].map(i=>i<=s?'★':'<i>★</i>').join('');
-    b.innerHTML=`<h3>${L.name}</h3><p>${L.desc}</p><div class="meta"><span>${L.sub}</span><span class="stars">${st}</span></div>`;
-    b.style.background=`linear-gradient(160deg,${L.sky[1]}cc,${L.sky[0]}cc)`;b.onclick=()=>start(k);box.appendChild(b)})}
-$('cam').onclick=()=>camOn?null:startCam();
-$('quit').onclick=quit;
-addEventListener('keydown',e=>{if(e.key==='Escape'&&state!=='menu')quit()});
-
-resize();renderMenu();requestAnimationFrame(frame);
-// a little ambient life on the title screen
-setInterval(()=>{if(state==='menu'&&document.visibilityState==='visible'){lvl=lvl||null;fx.push({x:Math.random()*W,y:H*(.55+Math.random()*.35),h:(300+Math.random()*80)%360,t:0,s:.6,faint:true})}},1400);
+/* ---------------- ui ---------------- */
+renderCards();requestAnimationFrame(frame);
+$('goCam').onclick=async()=>{$('intro').hidden=true;await startCam()};
+$('goMouse').onclick=()=>{audio();$('intro').hidden=true;status('按住再松开、拖动、快速划过、双击，各开一种花',6000)};
+$('cam').onclick=()=>{if(!camOn){$('intro').hidden=true;startCam()}};
+$('clear').onclick=()=>{garden.length=0;vines.length=0;petals.length=0};
+// a few flowers so the first frame is already a garden
+[[.22,.62,'sakura'],[.3,.7,'star'],[.75,.58,'sakura'],[.82,.68,'bud'],[.68,.72,'star']].forEach(([x,y,k],i)=>plant(W*x,H*y,U()*(k==='bud'?.02:.035),k,(320+i*30)%360,i*250));
 })();
 </script>
 
