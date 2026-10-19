@@ -60,7 +60,7 @@ video{display:none}
 
 <div class="app">
   <header class="bar">
-    <h1>月下五指琴<small>ド レ ミ ファ ソ · 一指一音</small></h1>
+    <h1>月下五指琴<small>指法数字 · 一指一音</small></h1>
     <div class="ctrls">
       <select id="song" aria-label="曲目"></select>
       <div class="seg" role="group" aria-label="模式">
@@ -82,7 +82,7 @@ video{display:none}
       <div>
         <h2>每根手指，管一个音</h2>
         <ul>
-          <li>右手大拇指 = 1 = ド，食指 2 = レ，中指 3 = ミ，无名指 4 = ファ，小指 5 = ソ。这就是钢琴上的 C 位五指，坐到真琴前手形不用变。</li>
+          <li>花苞上的数字是钢琴指法：右手大拇指 1、食指 2、中指 3、无名指 4、小指 5。下面的字是这根手指此刻按的音，换曲子、换手位时会跟着变，和真琴一样。</li>
           <li>开启摄像头后，右手举到镜头前，掌心朝屏幕、手指向上，先张开一秒校准。然后像按琴键一样，把某根指尖往屏幕方向点一下。</li>
           <li>跟弹模式里，只有按对手指才会开花、曲子才往下走。弹完会告诉你哪根手指最容易错。</li>
         </ul>
@@ -101,10 +101,11 @@ video{display:none}
 <script>
 (()=>{
 const FING=['大拇指','食指','中指','无名指','小指'];
-const SOL=['ド','レ','ミ','ファ','ソ'];
-const MIDI=[60,62,64,65,67];
+const NAMES=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
+const nm=m=>NAMES[m%12];
+const CPOS=[60,62,64,65,67];
 const COL=['#ffb7c9','#ffd3a1','#b9f0c8','#a9d8ff','#cdb6ff'];
-// songs: phrases of [finger, beats]
+// songs: phrases of [finger, beats, midi?]; midi defaults to the song's hand position
 const SONGS={
   chocho:{name:'ちょうちょう（蝴蝶）',info:'日本春天童谣 · 油菜花与樱花之间的蝴蝶',bpm:100,ph:[
     [[5,1],[3,1],[3,2],[4,1],[2,1],[2,2],[1,1],[2,1],[3,1],[4,1],[5,1],[5,1],[5,2]],
@@ -114,6 +115,10 @@ const SONGS={
   ode:{name:'歓喜の歌（欢乐颂）',info:'贝多芬 · 整首都在五指之内',bpm:96,ph:[
     [[3,1],[3,1],[4,1],[5,1],[5,1],[4,1],[3,1],[2,1],[1,1],[1,1],[2,1],[3,1],[3,1.5],[2,.5],[2,2]],
     [[3,1],[3,1],[4,1],[5,1],[5,1],[4,1],[3,1],[2,1],[1,1],[1,1],[2,1],[3,1],[2,1.5],[1,.5],[1,2]]]},
+  moon:{name:'月光（贝多芬）',info:'《月光奏鸣曲》第一乐章开头 · 右手三连音分解和弦（简化）',bpm:132,pos:[56,61,62,64,66],ph:[
+    [[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64]],
+    [[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64],[1,1,57],[2,1,61],[4,1,64],[1,1,57],[2,1,61],[4,1,64]],
+    [[1,1,57],[2,1,62],[4,1,66],[1,1,57],[2,1,62],[4,1,66],[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,2,64]]]},
   warm:{name:'五指热身',info:'每根手指轮流出场 · 练独立性',bpm:84,ph:[
     [[1,1],[2,1],[3,1],[4,1],[5,1],[4,1],[3,1],[2,1],[1,2]],
     [[1,1],[3,1],[2,1],[4,1],[3,1],[5,1],[4,1],[3,1],[2,1],[1,2]],
@@ -135,37 +140,43 @@ function audio(){ if(ac) return; ac=new (window.AudioContext||window.webkitAudio
   const conv=ac.createConvolver();const len=ac.sampleRate*2.4,ir=ac.createBuffer(2,len,ac.sampleRate);
   for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
   conv.buffer=ir;master.connect(dry);master.connect(conv);conv.connect(wet);dry.connect(ac.destination);wet.connect(ac.destination);}
-function play(f,vel=1){audio();const t=ac.currentTime,fr=440*2**((MIDI[f-1]-69)/12);
+function play(m,vel=1){audio();const t=ac.currentTime,fr=440*2**((m-69)/12);
   const g=ac.createGain();g.connect(master);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32*vel,t+.006);g.gain.exponentialRampToValueAtTime(.0008,t+2.4);
   [[1,1,2.4],[2,.42,1.4],[3,.18,.9],[4,.07,.6],[5,.04,.4]].forEach(([h,a,d])=>{const o=ac.createOscillator(),og=ac.createGain();o.type='sine';o.frequency.value=fr*h*(1+(h-1)*.0007);
     og.gain.setValueAtTime(a,t);og.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(og);og.connect(g);o.start(t);o.stop(t+2.5)});}
 
 /* ---------- state ---------- */
-let mode='follow',songKey='chocho',flat=[],idx=0,ok=0,bad=0,perF={},startT=0,demoT=null;
+let mode='follow',songKey='moon',flat=[],idx=0,ok=0,bad=0,perF={},startT=0,demoT=null;
 const buds=[0,1,2,3,4].map(i=>({x:0,y:0,tx:0,ty:0,pulse:0,down:false}));
 let handSeen=false, lastHand=0;
 const blooms=[],petals=[],ripples=[];
 
-function buildSong(){const s=SONGS[songKey];flat=[];s.ph.forEach((p,pi)=>p.forEach(([f,b],i)=>flat.push({f,b,gap:pi>0&&i===0})));
+function buildSong(){const s=SONGS[songKey];flat=[];const pos=s.pos||CPOS;s.ph.forEach((p,pi)=>p.forEach(([f,b,m],i)=>flat.push({f,b,m:m??pos[f-1],gap:pi>0&&i===0})));
   idx=0;ok=0;bad=0;perF={};for(let i=1;i<=5;i++)perF[i]={n:0,e:0};startT=0;
   $('songInfo').textContent=s.name+' · '+s.info;
-  $('score').innerHTML=flat.map((n,i)=>`<div class="n${n.gap?' gap':''}" style="color:${COL[n.f-1]}" data-i="${i}"><i>${n.f}</i><em>${SOL[n.f-1]}</em></div>`).join('');
+  $('score').innerHTML=flat.map((n,i)=>`<div class="n${n.gap?' gap':''}" style="color:${COL[n.f-1]}" data-i="${i}"><i>${n.f}</i><em>${nm(n.m)}</em></div>`).join('');
   refresh();}
+// what each finger is resting on right now: its next note in the song, else its last one
+function handPos(){const r=[null,null,null,null,null],s=SONGS[songKey],pos=s.pos||CPOS;
+  for(let j=idx;j<Math.min(flat.length,idx+12);j++){const n=flat[j];if(r[n.f-1]==null)r[n.f-1]=n.m}
+  for(let j=idx-1;j>=0;j--){const n=flat[j];if(r[n.f-1]==null)r[n.f-1]=n.m}
+  return r.map((v,i)=>v??pos[i])}
 function refresh(){const els=$('score').children;for(const el of els){const i=+el.dataset.i;el.classList.toggle('done',mode==='follow'&&i<idx);el.classList.toggle('cur',mode==='follow'&&i===idx)}
   const cur=els[idx];if(cur&&mode==='follow'){const sc=$('score');sc.scrollLeft=cur.offsetLeft-sc.clientWidth/2+20}
   const nx=$('next');
-  if(mode==='follow'&&flat[idx]){const f=flat[idx].f;nx.innerHTML=`下一个：<b style="color:${COL[f-1]}">${f}</b>${FING[f-1]} · ${SOL[f-1]}`}
+  if(mode==='follow'&&flat[idx]){const f=flat[idx].f;nx.innerHTML=`下一个：<b style="color:${COL[f-1]}">${f}</b>${FING[f-1]} · ${nm(flat[idx].m)}`}
   else nx.textContent=mode==='free'?'自由弹：随意点，听每根手指的音':'';
   $('stat').textContent=`正确 ${ok} · 错误 ${bad}`+(ok+bad?` · ${Math.round(ok/(ok+bad)*100)}%`:'');}
 
-function press(f,src){ // f: 1..5
+function press(f,src,dm){ // f: 1..5
   if(demoT&&src!=='demo')stopDemo();
   const b=buds[f-1];b.pulse=1;
-  if(mode==='free'||src==='demo'){play(f);bloom(b.x,b.y,f,src==='demo'?.7:1);return}
+  if(src==='demo'){play(dm);bloom(b.x,b.y,f,.7);return}
+  if(mode==='free'){play(handPos()[f-1]);bloom(b.x,b.y,f,1);return}
   const want=flat[idx]&&flat[idx].f;if(!want){return}
   if(!startT)startT=performance.now();
-  if(f===want){play(f);bloom(b.x,b.y,f,1);ok++;perF[f].n++;idx++;if(idx>=flat.length)setTimeout(finish,900)}
-  else{play(f,.35);bad++;perF[want].e++;perF[want].n++;ripples.push({x:b.x,y:b.y,t:0,c:'#8d96c4'});buds[want-1].pulse=1.4;
+  if(f===want){play(flat[idx].m);bloom(b.x,b.y,f,1);ok++;perF[f].n++;idx++;if(idx>=flat.length)setTimeout(finish,900)}
+  else{play(handPos()[f-1],.35);bad++;perF[want].e++;perF[want].n++;ripples.push({x:b.x,y:b.y,t:0,c:'#8d96c4'});buds[want-1].pulse=1.4;
     flash(`应该是 ${want} ${FING[want-1]}`)}
   refresh();}
 
@@ -181,7 +192,7 @@ function setStatusDefault(){$('status').textContent=camOn?(handSeen?'识别到�
 
 /* ---------- demo ---------- */
 function startDemo(){stopDemo();audio();$('demo').classList.add('on');$('demo').textContent='停止';const bpm=SONGS[songKey].bpm;let i=mode==='follow'?idx:0;
-  const step=()=>{if(i>=flat.length){stopDemo();return}const n=flat[i];press(n.f,'demo');
+  const step=()=>{if(i>=flat.length){stopDemo();return}const n=flat[i];press(n.f,'demo',n.m);
     const el=$('score').children[i];if(el){[...$('score').children].forEach(e=>e.classList.remove('cur'));el.classList.add('cur');$('score').scrollLeft=el.offsetLeft-$('score').clientWidth/2+20}
     i++;demoT=setTimeout(step,n.b*60000/bpm)};step();}
 function stopDemo(){clearTimeout(demoT);demoT=null;$('demo').classList.remove('on');$('demo').textContent='示范';refresh()}
@@ -201,8 +212,7 @@ function restLayout(){const cx=W/2,base=H*.66,sp=Math.min(W*.14,110);
 
 function drawBg(t){
   if(camOn&&video.readyState>=2){const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(W/vw,H/vh),dw=vw*s,dh=vh*s;
-    ctx.save();ctx.translate(W,0);ctx.scale(-1,1);ctx.filter='grayscale(.6) brightness(.55) contrast(1.1)';ctx.drawImage(video,(W-dw)/2,(H-dh)/2,dw,dh);ctx.restore();ctx.filter='none';
-    ctx.fillStyle='rgba(14,22,62,.5)';ctx.fillRect(0,0,W,H);}
+    ctx.save();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(video,(W-dw)/2,(H-dh)/2,dw,dh);ctx.restore();return}
   else{const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0b1026');g.addColorStop(1,'#1b2150');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
   for(const s of stars){ctx.globalAlpha=.25+.45*(.5+.5*Math.sin(t/900+s.p));ctx.fillStyle='#fff';ctx.fillRect(s.x,s.y,s.r,s.r)}ctx.globalAlpha=1;
   const mx=W*.82,my=Math.min(H*.2,110),mr=Math.max(26,Math.min(W,H)*.07);
@@ -216,7 +226,7 @@ function drawBg(t){
 function frame(t){
   drawBg(t);
   if(!camOn||!handSeen||performance.now()-lastHand>700)restLayout();
-  const want=mode==='follow'&&!demoT&&flat[idx]?flat[idx].f:0;
+  const want=mode==='follow'&&!demoT&&flat[idx]?flat[idx].f:0;const hp=handPos();
   const R=Math.max(16,Math.min(W,H)*.032);
   // light threads between buds (the "hand")
   ctx.strokeStyle='rgba(206,214,255,.18)';ctx.lineWidth=1;ctx.beginPath();
@@ -235,7 +245,7 @@ function frame(t){
     // bud: closed petals
     ctx.save();ctx.translate(b.x,b.y);for(let p=0;p<5;p++){ctx.save();ctx.rotate(p*Math.PI*2/5+t/4000*(i%2?1:-1));petalPath(r*.75);ctx.fillStyle='rgba(255,255,255,'+(.35+b.pulse*.4)+')';ctx.fill();ctx.restore()}ctx.restore();
     ctx.fillStyle='#1a1530';ctx.font=`700 ${Math.round(r*.9)}px ${getComputedStyle(document.documentElement).getPropertyValue('--body')}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(f,b.x,b.y+1);
-    ctx.fillStyle='#eef0ff';ctx.font=`500 ${Math.round(R*.62)}px "Shippori Mincho",serif`;ctx.globalAlpha=isNext||!want?.95:.55;ctx.fillText(SOL[i],b.x,b.y+r*2.1);ctx.globalAlpha=1});
+    ctx.font=`700 ${Math.round(R*.62)}px "Shippori Mincho",serif`;ctx.globalAlpha=isNext||!want?1:.7;ctx.lineWidth=3;ctx.strokeStyle='rgba(10,12,30,.75)';ctx.strokeText(nm(hp[i]),b.x,b.y+r*2.1);ctx.fillStyle='#fff';ctx.fillText(nm(hp[i]),b.x,b.y+r*2.1);ctx.globalAlpha=1});
   // petals drift like falling sakura
   for(let i=petals.length-1;i>=0;i--){const p=petals[i];p.vx*=.97;p.vy=p.vy*.97+.06;p.x+=p.vx+Math.sin(t/400+i)*.3;p.y+=p.vy;p.rot+=p.vr;p.life-=.007;if(p.life<=0||p.y>H+20){petals.splice(i,1);continue}
     ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=Math.min(1,p.life*1.4);petalPath(p.r);ctx.fillStyle=p.c;ctx.fill();ctx.restore()}ctx.globalAlpha=1;
@@ -282,7 +292,7 @@ function onHands(res){const lm=res.multiHandLandmarks&&res.multiHandLandmarks[0]
 
 /* ---------- controls ---------- */
 const sel=$('song');for(const k in SONGS){const o=document.createElement('option');o.value=k;o.textContent=SONGS[k].name;sel.appendChild(o)}
-sel.onchange=()=>{stopDemo();songKey=sel.value;$('result').hidden=true;buildSong()};
+sel.value=songKey;sel.onchange=()=>{stopDemo();songKey=sel.value;$('result').hidden=true;buildSong()};
 $('mFollow').onclick=()=>{mode='follow';$('mFollow').classList.add('on');$('mFree').classList.remove('on');refresh()};
 $('mFree').onclick=()=>{mode='free';$('mFree').classList.add('on');$('mFollow').classList.remove('on');refresh()};
 $('demo').onclick=()=>demoT?stopDemo():startDemo();
