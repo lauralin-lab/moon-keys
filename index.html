@@ -1,5 +1,5 @@
-<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
-<title>手势花园</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<title>Gesture Garden</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
@@ -48,23 +48,23 @@ video{display:none}
 <video id="video" playsinline muted></video>
 
 <div class="top">
-  <div class="brand">手势花园<small id="songInfo" style="display:block;font-family:var(--body);font-weight:400;font-size:.72rem;letter-spacing:.02em;color:var(--dim);margin-top:2px"></small></div>
-  <select class="btn" id="song" aria-label="曲子"></select>
-  <button class="btn" id="cam">开启摄像头</button>
-  <button class="btn" id="clear">清空花园</button>
-  <a class="btn" href="https://lauralin-lab.github.io/moon-keys/game.html" target="_blank" rel="noopener">接花瓣游戏</a>
-  <a class="btn" href="https://lauralin-lab.github.io/moon-keys/practice.html" target="_blank" rel="noopener">指法练习</a>
+  <div class="brand">Gesture Garden<small id="songInfo" style="display:block;font-family:var(--body);font-weight:400;font-size:.72rem;letter-spacing:.02em;color:var(--dim);margin-top:2px"></small></div>
+  <select class="btn" id="song" aria-label="Song"></select>
+  <button class="btn" id="cam">Turn on camera</button>
+  <button class="btn" id="clear">Clear garden</button>
+  <a class="btn" href="https://lauralin-lab.github.io/moon-keys/game.html" target="_blank" rel="noopener">Petal game</a>
+  <a class="btn" href="https://lauralin-lab.github.io/moon-keys/practice.html" target="_blank" rel="noopener">Fingering practice</a>
 </div>
 <div class="status" id="status"></div>
-<div class="count" id="count">已发现 0 / 5 种花</div>
+<div class="count" id="count">Found 0 / 5 flowers</div>
 <div class="cards" id="cards"></div>
 
 <div class="layer" id="intro">
   <div class="intro">
-    <h1>手势花园</h1>
-    <p>你的手就是花。握拳蓄力，张开就开花；捏一下种一颗种子；捏住拖动，长出一条花藤。<br>选一首曲子，每开一朵花就弹出曲子的下一个音：用手势把整首「月光」开出来。开过的花会留在画面里，慢慢长成你的花园。</p>
-    <div class="row"><button class="btn on" id="goCam">开启摄像头开始</button><button class="btn" id="goMouse">先用鼠标试试</button></div>
-    <p style="font-size:.78rem">鼠标：按住再松开＝握拳张开 · 按住拖动＝花藤 · 快速划过＝花吹雪 · 双击＝満開</p>
+    <h1>Gesture Garden</h1>
+    <p>Your hand is the flower. Make a fist to charge, open it to bloom. Pinch to plant a seed. Pinch and drag to grow a vine.<br>Pick a song and every bloom plays its next note, so your gestures play the whole of Moonlight. Flowers stay on screen and grow into your garden.</p>
+    <div class="row"><button class="btn on" id="goCam">Start with camera</button><button class="btn" id="goMouse">Try with mouse</button></div>
+    <p style="font-size:.78rem">Mouse: hold &amp; release = fist bloom · hold &amp; drag = vine · fast swipe = petal storm · double-click = full bloom</p>
   </div>
 </div>
 
@@ -106,16 +106,16 @@ function swell(root,amt){if(!ac)return;const t=ac.currentTime,f=ac.createBiquadF
 // each entry [melody midi, bass midi?]
 const A=(mel,bass={})=>mel.map((m,i)=>[m,bass[i]]);
 const SONGS={
-  free:{name:'自由（五声音阶）'},
-  moon:{name:'月光 · 贝多芬',notes:A([56,61,64,56,61,64,56,61,64,56,61,64, 56,61,64,56,61,64,57,61,64,57,61,64, 57,62,66,57,62,66,56,61,64,56,61,64, 56,60,66,56,61,64,56,61,63,54,60,63, 61],
+  free:{name:'Free (pentatonic)'},
+  moon:{name:'Moonlight Sonata · Beethoven',notes:A([56,61,64,56,61,64,56,61,64,56,61,64, 56,61,64,56,61,64,57,61,64,57,61,64, 57,62,66,57,62,66,56,61,64,56,61,64, 56,60,66,56,61,64,56,61,63,54,60,63, 61],
     {0:37,12:35,18:33,24:30,30:32,36:32,42:32,48:37})},
-  elise:{name:'致爱丽丝 · 贝多芬',notes:A([76,75,76,75,76,71,74,72,69, 60,64,69,71, 64,68,71,72, 64,76,75,76,75,76,71,74,72,69, 60,64,69,71, 64,72,71,69],
+  elise:{name:'Für Elise · Beethoven',notes:A([76,75,76,75,76,71,74,72,69, 60,64,69,71, 64,68,71,72, 64,76,75,76,75,76,71,74,72,69, 60,64,69,71, 64,72,71,69],
     {8:45,12:40,16:45,26:45,30:40,33:45})},
-  kira:{name:'小星星 · きらきら星',notes:A([60,60,67,67,69,69,67,65,65,64,64,62,62,60, 67,67,65,65,64,64,62,67,67,65,65,64,64,62, 60,60,67,67,69,69,67,65,65,64,64,62,62,60],
+  kira:{name:'Twinkle Twinkle Little Star',notes:A([60,60,67,67,69,69,67,65,65,64,64,62,62,60, 67,67,65,65,64,64,62,67,67,65,65,64,64,62, 60,60,67,67,69,69,67,65,65,64,64,62,62,60],
     {0:48,4:53,6:48,7:53,9:48,11:43,13:48,14:48,16:53,18:48,20:43,21:48,23:53,25:48,27:43,28:48,32:53,34:48,35:53,37:48,39:43,41:48})},
-  chocho:{name:'蝴蝶 · ちょうちょう',notes:A([67,64,64,65,62,62,60,62,64,65,67,67,67, 67,64,64,64,65,62,62,62,60,64,67,67,64,64,64, 62,62,62,62,62,64,65,64,64,64,64,64,65,67, 67,64,64,64,65,62,62,62,60,64,67,67,60],
+  chocho:{name:'Butterfly · Chōchō',notes:A([67,64,64,65,62,62,60,62,64,65,67,67,67, 67,64,64,64,65,62,62,62,60,64,67,67,64,64,64, 62,62,62,62,62,64,65,64,64,64,64,64,65,67, 67,64,64,64,65,62,62,62,60,64,67,67,60],
     {0:48,3:43,6:48,13:48,17:43,21:48,28:43,35:48,43:48,47:43,51:48,55:48})},
-  ode:{name:'欢乐颂 · 贝多芬',notes:A([64,64,65,67,67,65,64,62,60,60,62,64,64,62,62, 64,64,65,67,67,65,64,62,60,60,62,64,62,60,60],
+  ode:{name:'Ode to Joy · Beethoven',notes:A([64,64,65,67,67,65,64,62,60,60,62,64,64,62,62, 64,64,65,67,67,65,64,62,60,60,62,64,62,60,60],
     {0:48,4:43,8:48,12:43,15:48,19:43,23:48,27:43,29:48})}
 };
 let songKey='moon',sIdx=0,songsDone=0;
@@ -123,11 +123,11 @@ function bassNote(b){if(!ac||b==null)return;const t=ac.currentTime,g=ac.createGa
   [b,b+12].forEach((m,i)=>{const o=ac.createOscillator();o.type=i?'sine':'triangle';o.frequency.value=hz(m);o.connect(g);o.start(t);o.stop(t+3.3)})}
 // returns the melody note to play (or the fallback in free mode) and moves the song along
 function nextNote(fallback){const S=SONGS[songKey];if(!S.notes)return fallback;const [m,b]=S.notes[sIdx];bassNote(b);sIdx++;
-  if(sIdx>=S.notes.length){sIdx=0;songsDone++;setTimeout(()=>{banner={a:'一曲弾き終わった',b:S.name.split(' · ')[0],t:0};flash=.4;for(let k=0;k<60;k++)setTimeout(()=>petals.push({x:Math.random()*W,y:-10,vx:(Math.random()-.3),vy:1+Math.random(),r:3+Math.random()*5,rot:0,vr:.1,life:1.6,h:(hueBase+k*7)%360}),k*40)},400)}
+  if(sIdx>=S.notes.length){sIdx=0;songsDone++;setTimeout(()=>{banner={a:'Song complete',b:S.name.split(' · ')[0],t:0};flash=.4;for(let k=0;k<60;k++)setTimeout(()=>petals.push({x:Math.random()*W,y:-10,vx:(Math.random()-.3),vy:1+Math.random(),r:3+Math.random()*5,rot:0,vr:.1,life:1.6,h:(hueBase+k*7)%360}),k*40)},400)}
   renderSong();return m}
-function renderSong(){const S=SONGS[songKey],el=$('songInfo');if(!S.notes){el.textContent='每个手势都会开出五声音阶里的音';return}
-  const NM=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];const nxt=S.notes.slice(sIdx,sIdx+4).map(n=>NM[n[0]%12]).join(' ');
-  el.textContent=`${sIdx} / ${S.notes.length} · 接下来 ${nxt}`+(songsDone?` · 已弹完 ${songsDone} 遍`:'')}
+function renderSong(){const S=SONGS[songKey],el=$('songInfo');if(!S.notes){el.textContent='Every gesture blooms a note from the pentatonic scale';return}
+  const NM=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];const nxt=S.notes.slice(sIdx,sIdx+4).map(n=>NM[n[0]%12]).join(' ');
+  el.textContent=`${sIdx} / ${S.notes.length} · next ${nxt}`+(songsDone?` · played ${songsDone}×`:'')}
 
 /* ---------------- flowers ---------------- */
 const garden=[],fx=[],petals=[],vines=[],seeds=[];
@@ -150,16 +150,16 @@ function ring(x,y,r,h,s=1){fx.push({x,y,r,h,t:0,s})}
 
 /* ---------------- gesture discoveries ---------------- */
 const GEST=[
-  ['palm','掌に咲く','握拳，停一下，再张开。握得越久花越大'],
-  ['seed','種まき','拇指和食指捏一下再松开'],
-  ['vine','藤の道','捏住不放，拖动画线，松开满藤开花'],
-  ['sweep','花吹雪','张开手掌快速挥过去'],
-  ['burst','満開','两只手张开，从中间往两边拉开']];
+  ['palm','Palm bloom','Make a fist, hold, then open. Hold longer for a bigger flower'],
+  ['seed','Seed','Pinch thumb and index finger, then let go'],
+  ['vine','Vine','Pinch and drag a line, release and the vine blooms'],
+  ['sweep','Petal storm','Swipe an open hand quickly'],
+  ['burst','Full bloom','Open both hands and pull them apart']];
 const found=new Set();
-function renderCards(){$('cards').innerHTML=GEST.map(([k,n,d])=>`<div class="g${found.has(k)?' found':''}" id="g_${k}"><b>${n}</b><span>${d}</span></div>`).join('');$('count').textContent=`已发现 ${found.size} / 5 种花`}
+function renderCards(){$('cards').innerHTML=GEST.map(([k,n,d])=>`<div class="g${found.has(k)?' found':''}" id="g_${k}"><b>${n}</b><span>${d}</span></div>`).join('');$('count').textContent=`Found ${found.size} / 5 flowers`}
 let banner=null;
 function discover(k){if(found.has(k))return;found.add(k);renderCards();const el=$('g_'+k);if(el){el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),700)}
-  const g=GEST.find(x=>x[0]===k);banner={a:'新しい花',b:g[1],t:0};if(found.size===5)setTimeout(()=>{banner={a:'花園完成',b:'五种花全部开过了',t:0}},2200)}
+  const g=GEST.find(x=>x[0]===k);banner={a:'New flower',b:g[1],t:0};if(found.size===5)setTimeout(()=>{banner={a:'Garden complete',b:'All five flowers found',t:0}},2200)}
 
 /* ---------------- the five blooms ---------------- */
 function bloomPalm(x,y,charge){const h=nextHue(),r=U()*(.045+.065*charge),kind=charge>.75?'peony':'sakura';
@@ -225,15 +225,15 @@ const HANDS='https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/';
 let camOn=false,hp=null,busy=false,stream=null;
 function loadScript(src){return new Promise((res,rej)=>{if(window.Hands)return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
 function status(t,ms){$('status').textContent=t;clearTimeout(status.t);if(ms)status.t=setTimeout(()=>$('status').textContent='',ms)}
-async function startCam(){audio();status('正在打开摄像头…');
+async function startCam(){audio();status('Opening camera…');
   try{stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:false})}
-  catch(e){status('这里打不开摄像头。请在电脑的 Chrome 里打开 lauralin-lab.github.io/moon-keys ，并允许摄像头。现在可以先用鼠标玩。',9000);return false}
-  video.srcObject=stream;await video.play();camOn=true;$('cam').classList.add('on');$('cam').textContent='摄像头已开启';
-  status('加载手部识别（首次约 10 秒）…');
+  catch(e){status('The camera can\'t open here. Open lauralin-lab.github.io/moon-keys in Chrome on a computer and allow the camera. You can play with the mouse for now.',9000);return false}
+  video.srcObject=stream;await video.play();camOn=true;$('cam').classList.add('on');$('cam').textContent='Camera on';
+  status('Loading hand tracking (about 10 s the first time)…');
   try{await loadScript(HANDS+'hands.js');hp=new Hands({locateFile:f=>HANDS+f});
     hp.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.5});hp.onResults(onHands);await hp.initialize();
-    status('把手举到镜头前。先试试：握拳，停一下，张开',6000);pump();return true}
-  catch(e){status('手部识别加载失败，需要联网。可以先用鼠标玩。',8000);return false}}
+    status('Raise your hand to the camera. Try this first: make a fist, hold, open',6000);pump();return true}
+  catch(e){status('Hand tracking failed to load (needs internet). You can play with the mouse.',8000);return false}}
 async function pump(){if(!camOn)return;if(video.readyState>=2&&!busy){busy=true;try{await hp.send({image:video})}catch(e){}busy=false}requestAnimationFrame(pump)}
 const D=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 function onHands(res){const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(W/vw,H/vh),dw=vw*s,dh=vh*s,ox=(W-dw)/2,oy=(H-dh)/2;
@@ -294,10 +294,10 @@ function frame(T){ctx.save();if(shake>0){ctx.translate((Math.random()-.5)*shake,
 
 /* ---------------- ui ---------------- */
 renderCards();requestAnimationFrame(frame);
-const sel=$('song');for(const k in SONGS){const o=document.createElement('option');o.value=k;o.textContent='曲子：'+SONGS[k].name;sel.appendChild(o)}
+const sel=$('song');for(const k in SONGS){const o=document.createElement('option');o.value=k;o.textContent='Song: '+SONGS[k].name;sel.appendChild(o)}
 sel.value=songKey;sel.onchange=()=>{songKey=sel.value;sIdx=0;songsDone=0;renderSong()};renderSong();
 $('goCam').onclick=async()=>{$('intro').hidden=true;await startCam()};
-$('goMouse').onclick=()=>{audio();$('intro').hidden=true;status('按住再松开、拖动、快速划过、双击，各开一种花',6000)};
+$('goMouse').onclick=()=>{audio();$('intro').hidden=true;status('Hold and release, drag, swipe fast, double-click: each blooms a different flower',6000)};
 $('cam').onclick=()=>{if(!camOn){$('intro').hidden=true;startCam()}};
 $('clear').onclick=()=>{garden.length=0;vines.length=0;petals.length=0};
 // a few flowers so the first frame is already a garden
