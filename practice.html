@@ -1,0 +1,423 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body style="margin:0">
+<title>月下五指琴</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-screen stage. Night sky (or your mirrored camera, moonlit) fills the middle; controls above, score strip below. */
+:root{
+  --night:#0b1026; --night-2:#141b3d; --ink:#eef0ff; --dim:#9aa3cf; --line:rgba(206,214,255,.16);
+  --moon:#fff6dc; --accent:#ffc7d6;
+  --f1:#ffb7c9; --f2:#ffd3a1; --f3:#b9f0c8; --f4:#a9d8ff; --f5:#cdb6ff;
+  --display:"Shippori Mincho","Hiragino Mincho ProN","Songti SC",serif;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--body);overflow:hidden}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto}
+.bar{padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;border-bottom:1px solid var(--line);background:linear-gradient(var(--night-2),var(--night))}
+h1{font-family:var(--display);font-weight:700;font-size:1.25rem;margin:0;letter-spacing:.08em;white-space:nowrap}
+h1 small{font-family:var(--body);font-weight:400;font-size:.72rem;color:var(--dim);letter-spacing:.04em;margin-left:6px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto}
+select,button{font:inherit;font-size:.85rem;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+select option{background:var(--night-2)}
+button:hover,select:hover{border-color:rgba(255,220,235,.5)}
+button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.on{background:var(--accent);color:#2a1730;border-color:var(--accent);font-weight:500}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}
+.seg button.on{background:var(--accent)}
+.stage{position:relative;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+video{display:none}
+.hud{position:absolute;left:max(16px,env(safe-area-inset-left,0px));top:14px;right:max(16px,env(safe-area-inset-right,0px));display:flex;justify-content:space-between;gap:12px;pointer-events:none;flex-wrap:wrap}
+.next{font-family:var(--display);font-size:1.05rem;letter-spacing:.06em;text-shadow:0 1px 8px #000}
+.next b{font-size:1.6rem;margin:0 4px}
+.status{font-size:.8rem;color:var(--dim);max-width:34ch;text-align:right;text-shadow:0 1px 6px #000}
+.foot{padding-block:10px 12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-top:1px solid var(--line);background:linear-gradient(var(--night),var(--night-2));display:grid;gap:8px}
+.foot-top{display:flex;justify-content:space-between;gap:10px;font-size:.78rem;color:var(--dim);flex-wrap:wrap}
+.foot-top span{font-variant-numeric:tabular-nums}
+.score{display:flex;gap:6px;overflow-x:auto;scroll-behavior:smooth;padding-bottom:4px;scrollbar-width:thin}
+.n{flex:0 0 auto;width:38px;text-align:center;border-radius:10px;padding:5px 0 4px;border:1px solid var(--line);background:rgba(255,255,255,.03);transition:transform .2s,opacity .2s}
+.n i{display:block;font-style:normal;font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.n em{display:block;font-style:normal;font-size:.66rem;color:var(--dim);font-family:var(--display)}
+.n u{display:block;text-decoration:none;font-size:.6rem;margin-top:3px;padding-top:3px;border-top:1px solid var(--line);white-space:nowrap}
+.n{width:auto;min-width:40px;padding-inline:4px}
+.n.cur{transform:translateY(-3px);border-color:currentColor;box-shadow:0 0 14px -2px currentColor}
+.n.done{opacity:.32}
+.n.gap{margin-left:10px}
+.pianowrap{overflow-x:auto;scrollbar-width:thin;border-radius:8px}
+.kb{position:relative;display:flex;height:104px;width:max-content;margin-inline:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.wk{width:32px;height:100%;background:linear-gradient(#fbfaf6,#e9e6dc);border:1px solid #2a2f52;border-top:0;border-radius:0 0 6px 6px;position:relative;cursor:pointer}
+.bk{position:absolute;top:0;width:20px;height:62%;background:linear-gradient(#2a2c3a,#0d0e16);border:1px solid #000;border-top:0;border-radius:0 0 4px 4px;z-index:2;cursor:pointer}
+.wk.lit{background:linear-gradient(#fff6dc,#ffd9e4)}.bk.lit{background:linear-gradient(#6b5a86,#3a2f55)}
+.wk.want,.bk.want{box-shadow:inset 0 -6px 0 var(--wc),0 0 12px var(--wc)}
+.wk b,.bk b{position:absolute;left:50%;transform:translateX(-50%);bottom:22px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;font-weight:700;color:#1a1530;background:var(--fc)}
+.bk b{bottom:8px;width:16px;height:16px;font-size:.62rem}
+.wk b.l,.bk b.l{border:2px dashed #1a1530}
+.wk em{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-style:normal;font-size:.6rem;color:#6a6880}
+.card{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,9,24,.62);backdrop-filter:blur(3px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card>div{max-width:440px;width:100%;background:var(--night-2);border:1px solid var(--line);border-radius:18px;padding:22px 22px 18px;display:grid;gap:12px}
+.card h2{font-family:var(--display);margin:0;font-size:1.3rem;letter-spacing:.06em;text-wrap:balance}
+.card p,.card li{margin:0;font-size:.88rem;line-height:1.65;color:#d6daf5}
+.card ul{margin:0;padding-left:1.1em;display:grid;gap:4px}
+.card .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.big{font-family:var(--display);font-size:2.2rem;font-variant-numeric:tabular-nums}
+@media (max-width:560px){h1 small{display:none}.ctrls{margin-left:0}.status{text-align:left}}
+@media (prefers-reduced-motion:reduce){.n{transition:none}}
+</style>
+
+<div class="app">
+  <header class="bar">
+    <h1>月下五指琴<small>指法数字 · 一指一音</small></h1>
+    <div class="ctrls">
+      <select id="song" aria-label="曲目"></select>
+      <div class="seg" role="group" aria-label="模式">
+        <button id="mFollow" class="on">跟弹</button><button id="mFree">自由弹</button>
+      </div>
+      <button id="two" aria-pressed="true">双手</button>
+      <button id="demo">示范</button>
+      <button id="cam">开启摄像头</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <video id="video" playsinline muted></video>
+    <div class="hud">
+      <div class="next" id="next"></div>
+      <div class="status" id="status">点花苞，或按键盘 1–5 也能弹</div>
+    </div>
+    <div class="card" id="intro">
+      <div>
+        <h2>每根手指，管一个音</h2>
+        <ul>
+          <li>花苞上的数字是钢琴指法：右手大拇指 1、食指 2、中指 3、无名指 4、小指 5。下面的字是这根手指此刻按的音，换曲子、换手位时会跟着变，和真琴一样。</li>
+          <li>开启摄像头后，两只手举到镜头前，掌心朝屏幕、手指向上，先张开一秒校准。然后像按琴键一样，把某根指尖往屏幕方向点一下。右手弹旋律，左手弹低音；不想用左手就点「双手」切成单手。</li>
+          <li>最下面是真实的钢琴键盘：圆点数字是每根手指此刻放在哪个键上（虚线圈是左手），发光的键是下一个要按的。没有钢琴也可以直接点键盘练，认键位和指法。</li>
+          <li>每弹对一个音，左上角的樱花枝就开一朵花；一次就弹对的花是彩色的，弹错过的是灰白小花。弹完一首，就画完一枝樱花。</li>
+          <li>指尖移动会留下光的笔迹，自由弹模式下笔迹停留更久，可以在空中画图案；不开摄像头时，用手指或鼠标在画面上拖动也能画。</li>
+          <li>跟弹模式里，只有按对手指才会开花、曲子才往下走。弹完会告诉你哪根手指最容易错。</li>
+        </ul>
+        <div class="row"><button id="start" class="on">开始</button></div>
+      </div>
+    </div>
+    <div class="card" id="result" hidden><div id="resultBody"></div></div>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-top"><span id="songInfo"></span><span id="stat">正确 0 · 错误 0</span></div>
+    <div class="score" id="score"></div>
+    <div class="pianowrap" id="pianowrap"><div class="kb" id="kb" aria-label="钢琴键盘"></div></div>
+  </footer>
+</div>
+
+<script>
+(()=>{
+const FING=['大拇指','食指','中指','无名指','小指'];
+const HN=['右手','左手'];
+const NAMES=['ド','ド♯','レ','レ♯','ミ','ファ','ファ♯','ソ','ソ♯','ラ','ラ♯','シ'];
+const nm=m=>NAMES[m%12];
+const CPOS=[60,62,64,65,67];   // right hand, C position, fingers 1..5
+const LPOS=[55,53,52,50,48];   // left hand, C position an octave down: thumb on ソ, pinky on ド
+const COL=['#ffb7c9','#ffd3a1','#b9f0c8','#a9d8ff','#cdb6ff'];
+const C=[5,48],G=[1,55];
+// rh: phrases of [finger, beats, midi?]; lh: per phrase [noteIndex, finger, midi]
+const SONGS={
+  moon:{name:'月光（贝多芬）',info:'《月光奏鸣曲》第一乐章开头 · 右手三连音，左手低音（简化）',bpm:132,pos:[56,61,62,64,66],lpos:[56,54,52,51,49],
+    rh:[
+    [[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64]],
+    [[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,1,64],[1,1,57],[2,1,61],[4,1,64],[1,1,57],[2,1,61],[4,1,64]],
+    [[1,1,57],[2,1,62],[4,1,66],[1,1,57],[2,1,62],[4,1,66],[1,1,56],[2,1,61],[4,1,64],[1,1,56],[2,1,61],[4,2,64]]],
+    lh:[[[0,5,49]],[[0,5,47]],[[0,5,45],[6,5,44]]]},
+  chocho:{name:'ちょうちょう（蝴蝶）',info:'日本春天童谣 · 右手旋律，左手 ド/ソ 低音',bpm:100,
+    rh:[
+    [[5,1],[3,1],[3,2],[4,1],[2,1],[2,2],[1,1],[2,1],[3,1],[4,1],[5,1],[5,1],[5,2]],
+    [[5,1],[3,1],[3,1],[3,1],[4,1],[2,1],[2,1],[2,1],[1,1],[3,1],[5,1],[5,1],[3,1],[3,1],[3,2]],
+    [[2,1],[2,1],[2,1],[2,1],[2,1],[3,1],[4,2],[3,1],[3,1],[3,1],[3,1],[3,1],[4,1],[5,2]],
+    [[5,1],[3,1],[3,1],[3,1],[4,1],[2,1],[2,1],[2,1],[1,1],[3,1],[5,1],[5,1],[1,3]]],
+    lh:[[[0,...C],[3,...G],[6,...C],[10,...C]],[[0,...C],[4,...G],[8,...C],[12,...C]],[[0,...G],[4,...G],[7,...C],[11,...C]],[[0,...C],[4,...G],[8,...C],[12,...C]]]},
+  ode:{name:'歓喜の歌（欢乐颂）',info:'贝多芬 · 右手旋律，左手 ド/ソ 低音',bpm:96,
+    rh:[
+    [[3,1],[3,1],[4,1],[5,1],[5,1],[4,1],[3,1],[2,1],[1,1],[1,1],[2,1],[3,1],[3,1.5],[2,.5],[2,2]],
+    [[3,1],[3,1],[4,1],[5,1],[5,1],[4,1],[3,1],[2,1],[1,1],[1,1],[2,1],[3,1],[2,1.5],[1,.5],[1,2]]],
+    lh:[[[0,...C],[4,...G],[8,...C],[12,...G]],[[0,...C],[4,...G],[8,...C],[12,...G],[14,...C]]]},
+  warm:{name:'五指热身（右手）',info:'每根手指轮流出场 · 练独立性',bpm:84,
+    rh:[
+    [[1,1],[2,1],[3,1],[4,1],[5,1],[4,1],[3,1],[2,1],[1,2]],
+    [[1,1],[3,1],[2,1],[4,1],[3,1],[5,1],[4,1],[3,1],[2,1],[1,2]],
+    [[3,1],[4,1],[3,1],[4,1],[4,1],[5,1],[4,1],[5,1],[3,2]]]}
+};
+const DRILL={1:'1-2-1-2 / 1-3-1-3，大拇指侧面着键',2:'2-3-2-3，食指别翘起',3:'2-3-4-3-2，中指保持弯曲',4:'3-4-3-4 / 4-5-4-5，最弱的一根，慢速多练',5:'4-5-4-5，小指立住不要塌'};
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),stage=$('stage'),video=$('video');
+let W=0,H=0,DPR=1,stars=[];
+function resize(){DPR=Math.min(2,devicePixelRatio||1);W=stage.clientWidth;H=stage.clientHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+  stars=Array.from({length:Math.round(W*H/5000)},()=>({x:Math.random()*W,y:Math.random()*H*.75,r:Math.random()*1.2+.2,p:Math.random()*6}));}
+addEventListener('resize',()=>{resize();if(flat.length)buildTree()});resize();
+
+/* ---------- audio ---------- */
+let ac,master;
+function audio(){ if(ac) return; ac=new (window.AudioContext||window.webkitAudioContext)();
+  master=ac.createGain();master.gain.value=.8;const dry=ac.createGain();dry.gain.value=.8;const wet=ac.createGain();wet.gain.value=.35;
+  const conv=ac.createConvolver();const len=ac.sampleRate*2.4,ir=ac.createBuffer(2,len,ac.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
+  conv.buffer=ir;master.connect(dry);master.connect(conv);conv.connect(wet);dry.connect(ac.destination);wet.connect(ac.destination);}
+function play(m,vel=1){audio();lightKey(m);const t=ac.currentTime,fr=440*2**((m-69)/12);
+  const g=ac.createGain();g.connect(master);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32*vel,t+.006);g.gain.exponentialRampToValueAtTime(.0008,t+2.4);
+  [[1,1,2.4],[2,.42,1.4],[3,.18,.9],[4,.07,.6],[5,.04,.4]].forEach(([h,a,d])=>{const o=ac.createOscillator(),og=ac.createGain();o.type='sine';o.frequency.value=fr*h*(1+(h-1)*.0007);
+    og.gain.setValueAtTime(a,t);og.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(og);og.connect(g);o.start(t);o.stop(t+2.5)});}
+
+/* ---------- keyboard ---------- */
+const LO=36,HI=76,keys={};
+(function buildKb(){const kb=$('kb');let wi=0;const BL=[1,3,6,8,10];
+  for(let m=LO;m<=HI;m++){const black=BL.includes(m%12);const el=document.createElement('div');el.dataset.m=m;
+    if(black){el.className='bk';el.style.left=(wi*32-10)+'px'}else{el.className='wk';if(m%12===0)el.innerHTML='<em>ド'+(m/12-1)+'</em>';wi++}
+    el.addEventListener('pointerdown',e=>{e.preventDefault();pressMidi(m)});kb.appendChild(el);keys[m]=el}})();
+function lightKey(m){const k=keys[m];if(!k)return;k.classList.add('lit');clearTimeout(k._t);k._t=setTimeout(()=>k.classList.remove('lit'),260)}
+function paintKb(){for(const m in keys){const k=keys[m];k.classList.remove('want');k.querySelectorAll('b').forEach(x=>x.remove())}
+  for(let h=0;h<(two?2:1);h++)handPos(h).forEach((m,i)=>{const k=keys[m];if(!k)return;const d=document.createElement('b');d.textContent=i+1;d.style.setProperty('--fc',COL[i]);if(h)d.className='l';k.appendChild(d)});
+  if(mode==='follow')pending().forEach(p=>{const k=keys[p.m];if(k){k.classList.add('want');k.style.setProperty('--wc',COL[p.f-1])}});
+  const w=pending()[0]||{m:handPos(0)[0]};const k=keys[w.m];if(k){const pw=$('pianowrap');const x=k.offsetLeft-pw.clientWidth/2;if(Math.abs(pw.scrollLeft-x)>pw.clientWidth/3)pw.scrollLeft=x}}
+// tapping a real key: counts like pressing the finger that sits on it
+function pressMidi(m){if(demoT)stopDemo();
+  if(mode==='follow'){const p=pending().find(p=>p.m===m);if(p){press(p.h,p.f,'key');return}}
+  for(let h=0;h<(two?2:1);h++){const i=handPos(h).indexOf(m);if(i>=0){press(h,i+1,'key');return}}
+  play(m,mode==='follow'?.35:1);if(mode==='follow'&&flat[idx]){evWrong=true;bad++;const w=pending()[0];const st=stat(key(w));st.e++;st.n++;bud(w.h,w.f).pulse=1.4;flash(`这个键不在手位上。应该是 ${nm(w.m)}`);refresh()}}
+
+/* ---------- state ---------- */
+let mode='follow',songKey='moon',two=true,flat=[],idx=0,curDone=new Set(),ok=0,bad=0,perF={},startT=0,demoT=null;
+const buds=[];for(let h=0;h<2;h++)for(let f=1;f<=5;f++)buds.push({h,f,x:W/2,y:H/2,tx:0,ty:0,pulse:0});
+const bud=(h,f)=>buds[h*5+f-1];
+const tracked=[false,false],lastSeen=[0,0];
+const blooms=[],petals=[],ripples=[];
+const key=p=>(p.h?'L':'R')+p.f;
+
+function buildSong(){const s=SONGS[songKey];flat=[];const pos=s.pos||CPOS;
+  s.rh.forEach((ph,pi)=>{const lh=(s.lh&&s.lh[pi])||[];ph.forEach(([f,b,m],i)=>{const parts=[{h:0,f,m:m??pos[f-1]}];
+    if(two){const l=lh.find(x=>x[0]===i);if(l)parts.push({h:1,f:l[1],m:l[2]})}
+    flat.push({parts,b,gap:pi>0&&i===0})})});
+  idx=0;curDone=new Set();ok=0;bad=0;perF={};startT=0;grown=[];evWrong=false;trunkSeed=Object.keys(SONGS).indexOf(songKey)*977+31;buildTree();
+  $('songInfo').textContent=s.name+' · '+(two&&!s.lh?'这首只有右手 · ':'')+s.info;
+  $('score').innerHTML=flat.map((n,i)=>{const r=n.parts[0],l=n.parts[1];
+    return `<div class="n${n.gap?' gap':''}" style="color:${COL[r.f-1]}" data-i="${i}"><i>${r.f}</i><em>${nm(r.m)}</em>${l?`<u style="color:${COL[l.f-1]}">左${l.f} ${nm(l.m)}</u>`:(two?'<u>&nbsp;</u>':'')}</div>`}).join('');
+  refresh();}
+// what each finger of a hand rests on now: its next note in the song, else its last one
+function handPos(h){const r=[null,null,null,null,null],s=SONGS[songKey],pos=h?(s.lpos||LPOS):(s.pos||CPOS);
+  for(let j=idx;j<Math.min(flat.length,idx+12);j++)for(const p of flat[j].parts)if(p.h===h&&r[p.f-1]==null)r[p.f-1]=p.m;
+  for(let j=idx-1;j>=0;j--)for(const p of flat[j].parts)if(p.h===h&&r[p.f-1]==null)r[p.f-1]=p.m;
+  return r.map((v,i)=>v??pos[i])}
+function pending(){const ev=flat[idx];return ev?ev.parts.filter((p,k)=>!curDone.has(k)):[]}
+function refresh(){const els=$('score').children;for(const el of els){const i=+el.dataset.i;el.classList.toggle('done',mode==='follow'&&i<idx);el.classList.toggle('cur',mode==='follow'&&i===idx)}
+  const cur=els[idx];if(cur&&mode==='follow'){const sc=$('score');sc.scrollLeft=cur.offsetLeft-sc.clientWidth/2+20}
+  const nx=$('next');
+  if(mode==='follow'&&flat[idx]){nx.innerHTML='下一个：'+pending().map(p=>`${two?HN[p.h]:''}<b style="color:${COL[p.f-1]}">${p.f}</b>${FING[p.f-1]} · ${nm(p.m)}`).join('　＋　')}
+  else nx.textContent=mode==='free'?'自由弹：随意点，听每根手指的音':'';
+  paintKb();
+  $('stat').textContent=`正确 ${ok} · 错误 ${bad}`+(ok+bad?` · ${Math.round(ok/(ok+bad)*100)}%`:'');}
+function stat(k){return perF[k]||(perF[k]={n:0,e:0})}
+
+function press(h,f,src,dm){
+  if(h===1&&!two)return;
+  if(demoT&&src!=='demo')stopDemo();
+  const b=bud(h,f);b.pulse=1;
+  if(src==='demo'){play(dm);bloom(b.x,b.y,f,.7);return}
+  if(mode==='free'){play(handPos(h)[f-1]);bloom(b.x,b.y,f,1);return}
+  const ev=flat[idx];if(!ev)return;
+  if(!startT)startT=performance.now();
+  const k=ev.parts.findIndex((p,i)=>!curDone.has(i)&&p.h===h&&p.f===f);
+  if(k>=0){const p=ev.parts[k];play(p.m);bloom(b.x,b.y,f,1);ok++;stat(key(p)).n++;curDone.add(k);
+    if(curDone.size===ev.parts.length){plant(idx,!evWrong);evWrong=false;idx++;curDone=new Set();if(idx>=flat.length)setTimeout(finish,900)}}
+  else{const w=pending()[0];evWrong=true;play(handPos(h)[f-1],.35);bad++;const st=stat(key(w));st.e++;st.n++;ripples.push({x:b.x,y:b.y,t:0,c:'#8d96c4'});bud(w.h,w.f).pulse=1.4;
+    flash(`应该是 ${two?HN[w.h]:''}${w.f} ${FING[w.f-1]}`)}
+  refresh();}
+
+function finish(){const sec=Math.round((performance.now()-startT)/1000);const acc=ok+bad?Math.round(ok/(ok+bad)*100):0;
+  let worst=null,we=0;for(const k in perF)if(perF[k].e>we){we=perF[k].e;worst=k}
+  let tip='<p>一次没错。下一步：坐到真钢琴前，用同样的指法再弹一遍，或者换下一首。</p>';
+  if(worst){const h=worst[0]==='L'?1:0,f=+worst[1];tip=`<p>最常出错的是 <b style="color:${COL[f-1]}">${two?HN[h]:''}${f} ${FING[f-1]}</b>（${we} 次）。单练：${DRILL[f]}。练顺了再回来弹整首。</p>`}
+  $('resultBody').innerHTML=`<h2>${SONGS[songKey].name} 弹完了</h2><div class="big">${acc}%</div><p>正确 ${ok} 次 · 错误 ${bad} 次 · 用时 ${sec} 秒 · 彩色樱花 ${grown.filter(g=>g&&g.good).length} / ${flat.length} 朵</p>${tip}<div class="row"><button id="again" class="on">再弹一遍</button></div>`;
+  $('result').hidden=false;$('again').onclick=()=>{$('result').hidden=true;buildSong()};
+  buds.filter(b=>two||b.h===0).forEach((b,k)=>setTimeout(()=>bloom(b.x,b.y,b.f,.8),k*90));
+  for(let k=0;k<80;k++)setTimeout(()=>petals.push({x:Math.random()*W,y:-10,vx:(Math.random()-.3)*1.5,vy:1+Math.random(),r:3+Math.random()*4,rot:Math.random()*6,vr:(Math.random()-.5)*.1,life:1.6,c:COL[k%5]}),k*40);}
+
+let flashT;function flash(t){const s=$('status');s.textContent=t;clearTimeout(flashT);flashT=setTimeout(()=>setStatusDefault(),1600)}
+function setStatusDefault(){$('status').textContent=camOn?((tracked[0]||tracked[1])?'识别到手了 · 指尖往屏幕点':(two?'两只手都举到镜头前，掌心朝屏幕':'把右手举到镜头前，掌心朝屏幕')):(two?'点花苞，或键盘：右手 1–5，左手 T R E W Q':'点花苞，或按键盘 1–5 也能弹')}
+
+/* ---------- demo ---------- */
+function startDemo(){stopDemo();audio();$('demo').classList.add('on');$('demo').textContent='停止';const bpm=SONGS[songKey].bpm;let i=mode==='follow'?idx:0;
+  const step=()=>{if(i>=flat.length){stopDemo();return}const n=flat[i];n.parts.forEach(p=>press(p.h,p.f,'demo',p.m));
+    const el=$('score').children[i];if(el){[...$('score').children].forEach(e=>e.classList.remove('cur'));el.classList.add('cur');$('score').scrollLeft=el.offsetLeft-$('score').clientWidth/2+20}
+    i++;demoT=setTimeout(step,n.b*60000/bpm)};step();}
+function stopDemo(){clearTimeout(demoT);demoT=null;$('demo').classList.remove('on');$('demo').textContent='示范';refresh()}
+
+/* ---------- the song's sakura branch: one blossom per note you play ---------- */
+let tree={segs:[],slots:[]},grown=[],evWrong=false,trunkSeed=1;
+function rng(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
+function buildTree(){const r=rng(trunkSeed),segs=[],slots=[];const N=Math.max(1,flat.length);
+  const unit=Math.min(W,H*1.6);
+  function grow(x,y,a,len,w,d,order){const bend=(r()-.5)*.6;const ex=x+Math.cos(a)*len,ey=y+Math.sin(a)*len;
+    const cx=x+Math.cos(a+bend)*len*.5,cy=y+Math.sin(a+bend)*len*.5;segs.push({x,y,cx,cy,ex,ey,w,d:order});
+    for(const t of [.45,.8,1]){const q=1-t;const px=q*q*x+2*q*t*cx+t*t*ex,py=q*q*y+2*q*t*cy+t*t*ey;
+      slots.push({x:px+(r()-.5)*w*3,y:py+(r()-.5)*w*3,o:order+t,rot:r()*6})}
+    if(d<=0)return;const n=d>3?2:1+(r()<.6);
+    for(let k=0;k<n;k++){const da=(k===0?-1:1)*(.35+r()*.5)+(r()-.5)*.2;grow(ex,ey,a+da*(n===1?(r()<.5?-1:1):1),len*(.66+r()*.12),w*.68,d-1,order+1)}}
+  grow(W+unit*.02,H*.16,Math.PI-.18,unit*.2,Math.max(5,unit*.011),5,0);
+  for(const sl of slots)sl.y=Math.min(sl.y,H*.48);
+  slots.sort((a,b)=>a.o-b.o);
+  const pick=[];for(let i=0;i<N;i++)pick.push(slots[Math.min(slots.length-1,Math.floor(i*slots.length/N))]);
+  tree={segs,slots:pick};}
+function plant(i,good){const sl=tree.slots[i];if(!sl)return;grown[i]={t:0,good,c:COL[(flat[i].parts[0].f)-1]};
+  for(let k=0;k<6;k++){const a=Math.random()*6.3;petals.push({x:sl.x,y:sl.y,vx:Math.cos(a)*1.2,vy:Math.sin(a)*1.2,r:3+Math.random()*3,rot:Math.random()*6,vr:(Math.random()-.5)*.1,life:.7,c:grown[i].c})}}
+function drawTree(t){const prog=grown.filter(Boolean).length,N=tree.slots.length||1;
+  const reach=1+prog/N*6; // the branch grows longer as you play
+  ctx.lineCap='round';
+  for(const sg of tree.segs){if(sg.d>reach)continue;const a=Math.min(1,reach-sg.d);
+    ctx.beginPath();ctx.moveTo(sg.x,sg.y);ctx.quadraticCurveTo(sg.cx,sg.cy,sg.x+(sg.ex-sg.x)*a,sg.y+(sg.ey-sg.y)*a);
+    ctx.strokeStyle='rgba(28,18,26,.82)';ctx.lineWidth=sg.w;ctx.stroke();
+    ctx.strokeStyle='rgba(255,236,226,.22)';ctx.lineWidth=Math.max(1,sg.w*.22);ctx.stroke()}
+  const R=Math.max(10,Math.min(W,H)*.02);
+  tree.slots.forEach((sl,i)=>{const g=grown[i];const sway=Math.sin(t/1400+i)*1.5;
+    if(!g){if(mode==='follow'&&i===idx&&!demoT){ctx.beginPath();ctx.arc(sl.x+sway,sl.y,R*.35,0,7);ctx.fillStyle='rgba(255,220,230,'+(.35+.3*Math.sin(t/250))+')';ctx.fill()}return}
+    g.t=Math.min(1,g.t+.04);const e=1-Math.pow(1-g.t,3);
+    flower(sl.x+sway,sl.y,R*(g.good?1.15:.7)*e,sl.rot,g.good?g.c:'#c9c6d8',g.good?.95:.6)})}
+
+/* ---------- light trails: your fingertips paint ---------- */
+const trails=[[],[],[],[],[],[],[],[],[],[]],ptr=[];
+function trailLife(){return mode==='free'?2600:700}
+function feedTrails(now){buds.forEach((b,i)=>{if(!camOn||!tracked[b.h]||now-lastSeen[b.h]>300)return;const tr=trails[i],last=tr[tr.length-1];
+  if(!last||Math.hypot(last.x-b.x,last.y-b.y)>2){tr.push({x:b.x,y:b.y,t:now});
+    if(last){const v=Math.hypot(last.x-b.x,last.y-b.y);if(v>14&&Math.random()<.5)petals.push({x:b.x,y:b.y,vx:(b.x-last.x)*.05,vy:(b.y-last.y)*.05-.4,r:2.5+Math.random()*3,rot:Math.random()*6,vr:.08,life:.6,c:COL[b.f-1]})}}})}
+function drawTrail(tr,c,now,wid){const L=trailLife();while(tr.length&&now-tr[0].t>L)tr.shift();if(tr.length<2)return;
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.lineJoin='round';
+  for(let j=1;j<tr.length;j++){const a=1-(now-tr[j].t)/L;ctx.beginPath();ctx.moveTo(tr[j-1].x,tr[j-1].y);ctx.lineTo(tr[j].x,tr[j].y);
+    ctx.strokeStyle=c;ctx.globalAlpha=a*.55;ctx.lineWidth=wid*(.3+a);ctx.stroke();ctx.globalAlpha=a*.9;ctx.strokeStyle='#fff';ctx.lineWidth=wid*.25*a;ctx.stroke()}
+  ctx.restore();ctx.globalAlpha=1}
+
+/* ---------- visuals ---------- */
+function bloom(x,y,f,s){const c=COL[f-1];blooms.push({x,y,c,t:0,s,rot:Math.random()*Math.PI});
+  for(let k=0;k<Math.round(16*s);k++){const a=Math.random()*Math.PI*2,v=1+Math.random()*3.2;petals.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.5,r:4+Math.random()*5,rot:Math.random()*6,vr:(Math.random()-.5)*.15,life:1,c})}
+  ripples.push({x,y,t:0,c});}
+function petalPath(r){ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(r*.55,-r*.35,r*.6,-r*.95,0,-r*1.1);ctx.bezierCurveTo(-r*.6,-r*.95,-r*.55,-r*.35,0,0);ctx.closePath()}
+function flower(x,y,r,rot,c,a){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=a;
+  for(let p=0;p<5;p++){ctx.save();ctx.rotate(p*Math.PI*2/5);petalPath(r);const g=ctx.createLinearGradient(0,0,0,-r);g.addColorStop(0,'#fff');g.addColorStop(1,c);ctx.fillStyle=g;ctx.fill();ctx.restore()}
+  ctx.beginPath();ctx.arc(0,0,r*.16,0,7);ctx.fillStyle='#fff6dc';ctx.fill();ctx.restore();ctx.globalAlpha=1}
+
+// resting "hands": right hand thumb-left, left hand mirrored with its thumb toward the middle
+function restLayout(h){const off=[[-2.1,.55],[-1,-.55],[0,-.85],[1,-.6],[1.95,-.15]];
+  const sp=two?Math.min(W*.072,95):Math.min(W*.14,110),base=H*.62;
+  const cx=two?(h?W*.29:W*.71):W/2,dir=h?-1:1;
+  for(let f=1;f<=5;f++){const b=bud(h,f);b.tx=cx+dir*off[f-1][0]*sp;b.ty=base+off[f-1][1]*sp}}
+
+function drawBg(t){
+  if(camOn&&video.readyState>=2){const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(W/vw,H/vh),dw=vw*s,dh=vh*s;
+    ctx.save();ctx.translate(W,0);ctx.scale(-1,1);ctx.drawImage(video,(W-dw)/2,(H-dh)/2,dw,dh);ctx.restore();return}
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0b1026');g.addColorStop(1,'#1b2150');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(const s of stars){ctx.globalAlpha=.25+.45*(.5+.5*Math.sin(t/900+s.p));ctx.fillStyle='#fff';ctx.fillRect(s.x,s.y,s.r,s.r)}ctx.globalAlpha=1;
+  const mx=W*.5,my=Math.min(H*.18,100),mr=Math.max(24,Math.min(W,H)*.06);
+  const halo=ctx.createRadialGradient(mx,my,mr*.6,mx,my,mr*4);halo.addColorStop(0,'rgba(255,246,220,.28)');halo.addColorStop(1,'rgba(255,246,220,0)');ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
+  ctx.beginPath();ctx.arc(mx,my,mr,0,7);ctx.fillStyle='#fff6dc';ctx.fill();
+  const beam=ctx.createLinearGradient(mx,my,mx,H);beam.addColorStop(0,'rgba(255,246,220,.10)');beam.addColorStop(1,'rgba(255,246,220,0)');
+  ctx.fillStyle=beam;ctx.beginPath();ctx.moveTo(mx-mr,my);ctx.lineTo(mx+mr,my);ctx.lineTo(W*.9,H);ctx.lineTo(W*.1,H);ctx.closePath();ctx.fill();}
+
+function frame(t){
+  drawBg(t);const now=performance.now();
+  drawTree(t);feedTrails(now);
+  for(let h=0;h<2;h++)if(!camOn||!tracked[h]||now-lastSeen[h]>700)restLayout(h);
+  const want=mode==='follow'&&!demoT?pending():[];
+  const hp=[handPos(0),handPos(1)];
+  const R=Math.max(14,Math.min(W,H)*(two?.027:.032));
+  const vis=buds.filter(b=>two||b.h===0);
+  vis.forEach(b=>{b.x+=(b.tx-b.x)*.45;b.y+=(b.ty-b.y)*.45});
+  ctx.strokeStyle='rgba(206,214,255,.22)';ctx.lineWidth=1;
+  for(let h=0;h<(two?2:1);h++){ctx.beginPath();for(let f=1;f<=5;f++){const b=bud(h,f);f>1?ctx.lineTo(b.x,b.y):ctx.moveTo(b.x,b.y)}ctx.stroke()}
+  for(let i=ripples.length-1;i>=0;i--){const r=ripples[i];r.t+=.022;if(r.t>=1){ripples.splice(i,1);continue}
+    ctx.beginPath();ctx.arc(r.x,r.y,R+r.t*R*4,0,7);ctx.strokeStyle=r.c;ctx.globalAlpha=(1-r.t)*.7;ctx.lineWidth=2*(1-r.t)+.5;ctx.stroke()}ctx.globalAlpha=1;
+  buds.forEach((b,i)=>drawTrail(trails[i],COL[b.f-1],now,Math.max(4,R*.45)));drawTrail(ptr,'#ffe6ef',now,Math.max(5,R*.55));
+  for(let i=blooms.length-1;i>=0;i--){const b=blooms[i];b.t+=.018;if(b.t>=1){blooms.splice(i,1);continue}
+    const e=1-Math.pow(1-Math.min(1,b.t*2.2),3);const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,R*5*b.s);g.addColorStop(0,'rgba(255,246,220,'+(.45*(1-b.t))+')');g.addColorStop(1,'rgba(255,246,220,0)');
+    ctx.fillStyle=g;ctx.fillRect(b.x-R*5,b.y-R*5,R*10,R*10);flower(b.x,b.y,R*2.4*e*b.s,b.rot+b.t*.6,b.c,1-b.t*b.t)}
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  vis.forEach(b=>{b.pulse*=.9;const c=COL[b.f-1],r=R*(1+b.pulse*.35);const isNext=want.some(p=>p.h===b.h&&p.f===b.f);
+    if(isNext){const k=.5+.5*Math.sin(t/220);ctx.beginPath();ctx.arc(b.x,b.y,r*1.9+k*5,0,7);ctx.strokeStyle=c;ctx.globalAlpha=.55+.4*k;ctx.lineWidth=2.5;ctx.stroke();ctx.globalAlpha=1}
+    const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,r*2.4);g.addColorStop(0,c);g.addColorStop(.35,c+'88');g.addColorStop(1,c+'00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.x,b.y,r*2.4,0,7);ctx.fill();
+    ctx.save();ctx.translate(b.x,b.y);for(let p=0;p<5;p++){ctx.save();ctx.rotate(p*Math.PI*2/5+t/4000*(b.f%2?1:-1));petalPath(r*.75);ctx.fillStyle='rgba(255,255,255,'+(.35+b.pulse*.4)+')';ctx.fill();ctx.restore()}ctx.restore();
+    ctx.fillStyle='#1a1530';ctx.font=`700 ${Math.round(r*.9)}px "Noto Sans SC",sans-serif`;ctx.fillText(b.f,b.x,b.y+1);
+    const lab=(two&&b.f===3?(b.h?'左 ':'右 '):'')+nm(hp[b.h][b.f-1]);
+    ctx.font=`700 ${Math.round(R*.62)}px "Shippori Mincho",serif`;ctx.globalAlpha=isNext||!want.length?1:.7;ctx.lineWidth=3;ctx.strokeStyle='rgba(10,12,30,.75)';ctx.strokeText(lab,b.x,b.y+r*2.1);ctx.fillStyle='#fff';ctx.fillText(lab,b.x,b.y+r*2.1);ctx.globalAlpha=1});
+  for(let i=petals.length-1;i>=0;i--){const p=petals[i];p.vx*=.97;p.vy=p.vy*.97+.06;p.x+=p.vx+Math.sin(t/400+i)*.3;p.y+=p.vy;p.rot+=p.vr;p.life-=.007;if(p.life<=0||p.y>H+20){petals.splice(i,1);continue}
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=Math.min(1,p.life*1.4);petalPath(p.r);ctx.fillStyle=p.c;ctx.fill();ctx.restore()}ctx.globalAlpha=1;
+  requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+
+/* ---------- pointer & keys ---------- */
+cv.addEventListener('pointermove',e=>{if(!e.buttons)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,now=performance.now();const l=ptr[ptr.length-1];ptr.push({x,y,t:now});
+  if(l&&Math.hypot(l.x-x,l.y-y)>10&&Math.random()<.6)petals.push({x,y,vx:(x-l.x)*.05,vy:(y-l.y)*.05-.4,r:3+Math.random()*3,rot:Math.random()*6,vr:.08,life:.7,c:COL[Math.floor(Math.random()*5)]})});
+cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let best=null,bd=1e9;
+  buds.forEach(b=>{if(!two&&b.h)return;const d=Math.hypot(b.x-x,b.y-y);if(d<bd){bd=d;best=b}});if(best&&bd<Math.max(50,Math.min(W,H)*.08))press(best.h,best.f,'tap')});
+addEventListener('keydown',e=>{if(e.repeat||e.target.tagName==='SELECT')return;const k=e.key.toLowerCase();
+  let i='12345'.indexOf(k);if(i>=0){press(0,i+1,'key');e.preventDefault();return}
+  i='trewq'.indexOf(k);if(i>=0&&two){press(1,i+1,'key');e.preventDefault()}});
+
+/* ---------- camera + hand tracking ---------- */
+const HANDS='https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/';
+let camOn=false,hands=null,busy=false,stream=null;
+const TIP=[4,8,12,16,20],MCP=[2,5,9,13,17];
+const HS=[0,1].map(()=>({base:[0,0,0,0,0],dn:[0,0,0,0,0].map(()=>false),lastT:[0,0,0,0,0],calib:0}));
+function loadScript(src){return new Promise((res,rej)=>{if(window.Hands)return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('script'));document.head.appendChild(s)})}
+async function startCam(){
+  $('status').textContent='正在打开摄像头…';
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:false})}
+  catch(e){$('status').textContent='这个窗口不让用摄像头。打开 lauralin-lab.github.io/moon-keys 就能用手势弹；现在可以先点花苞或用键盘。';return}
+  video.srcObject=stream;await video.play();camOn=true;$('cam').classList.add('on');$('cam').textContent='关闭摄像头';
+  $('status').textContent='加载手部识别（首次约 10 秒）…';
+  try{await loadScript(HANDS+'hands.js');hands=new Hands({locateFile:f=>HANDS+f});
+    hands.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.5});hands.onResults(onHands);await hands.initialize();setStatusDefault();pump()}
+  catch(e){$('status').textContent='手部识别加载失败（需要联网）。摄像头画面已开，可先点花苞弹。'}}
+function stopCam(){camOn=false;tracked[0]=tracked[1]=false;if(stream)stream.getTracks().forEach(t=>t.stop());$('cam').classList.remove('on');$('cam').textContent='开启摄像头';setStatusDefault()}
+async function pump(){if(!camOn||!hands)return;if(video.readyState>=2&&!busy){busy=true;try{await hands.send({image:video})}catch(e){}busy=false}requestAnimationFrame(pump)}
+const D=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function onHands(res){const now=performance.now();const list=res.multiHandLandmarks||[];
+  const vw=video.videoWidth,vh=video.videoHeight,s=Math.max(W/vw,H/vh),dw=vw*s,dh=vh*s,ox=(W-dw)/2,oy=(H-dh)/2;
+  const sx=x=>W-(ox+x*dw),sy=y=>oy+y*dh;
+  // which hand is which: on the mirrored screen your right hand shows on the right
+  const hs=list.map(lm=>({lm,x:sx(lm[0].x)})).sort((a,b)=>b.x-a.x);
+  const assign=[];
+  if(!two){if(hs[0])assign.push([0,hs[0].lm])}
+  else if(hs.length>=2){assign.push([0,hs[0].lm],[1,hs[1].lm])}
+  else if(hs.length===1){assign.push([hs[0].x>W/2?0:1,hs[0].lm])}
+  const seen=[false,false];
+  for(const [h,lm] of assign){seen[h]=true;const st=HS[h];
+    if(!tracked[h]){tracked[h]=true;st.calib=now+900;st.base.fill(0);flash(`${two?HN[h]:''}张开五指，保持一秒校准…`)}lastSeen[h]=now;
+    const palm=D(lm[0],lm[9])||1e-3;const fresh=[];
+    for(let i=0;i<5;i++){const tp=lm[TIP[i]],b=bud(h,i+1);b.tx=sx(tp.x);b.ty=sy(tp.y);
+      const ext=(i===0?D(tp,lm[9]):D(tp,lm[MCP[i]]))/palm;
+      if(ext>st.base[i])st.base[i]=ext;else st.base[i]+=(ext-st.base[i])*.004;
+      if(now<st.calib)continue;
+      const th=i===0?.8:.7,rel=i===0?.9:.84;
+      if(!st.dn[i]&&ext<st.base[i]*th&&now-st.lastT[i]>140){st.dn[i]=true;st.lastT[i]=now;fresh.push(i)}
+      else if(st.dn[i]&&ext>st.base[i]*rel)st.dn[i]=false;}
+    if(fresh.length&&fresh.length<=2)fresh.forEach(i=>press(h,i+1,'hand')); // a whole fist isn't a note
+  }
+  for(let h=0;h<2;h++)if(!seen[h]&&tracked[h]&&now-lastSeen[h]>1000){tracked[h]=false;setStatusDefault()}
+}
+
+/* ---------- controls ---------- */
+const sel=$('song');for(const k in SONGS){const o=document.createElement('option');o.value=k;o.textContent=SONGS[k].name;sel.appendChild(o)}
+sel.value=songKey;sel.onchange=()=>{stopDemo();songKey=sel.value;$('result').hidden=true;buildSong()};
+$('mFollow').onclick=()=>{mode='follow';$('mFollow').classList.add('on');$('mFree').classList.remove('on');refresh()};
+$('mFree').onclick=()=>{mode='free';$('mFree').classList.add('on');$('mFollow').classList.remove('on');refresh()};
+const tb=$('two');const syncTwo=()=>{tb.classList.toggle('on',two);tb.textContent=two?'双手':'单手（右）';tb.setAttribute('aria-pressed',two)};
+tb.onclick=()=>{two=!two;syncTwo();stopDemo();$('result').hidden=true;buildSong();setStatusDefault()};syncTwo();
+$('demo').onclick=()=>demoT?stopDemo():startDemo();
+$('cam').onclick=()=>camOn?stopCam():startCam();
+$('start').onclick=()=>{audio();$('intro').hidden=true};
+buildSong();setStatusDefault();
+})();
+</script>
+
+</body></html>
